@@ -79,7 +79,7 @@ cd frontend && npm run test -- src/App.test.tsx
 - Точка входа бэкенда — `backend/app/main.py`; роутеры лежат в `backend/app/routers/` и
   монтируются под `/api`.
 
-## Скилы агента
+## Скилы агента: установка и обновление
 
 Скилы из `mattpocock/skills` лежат в `.agents/skills/` (каталог в `.gitignore`), их версии
 фиксирует коммитящийся **`skills-lock.json`** (коммит-источник + хеш каждого скила).
@@ -95,10 +95,27 @@ OpenCode находит их в `.agents/skills/` сам; вызов — `@<id>`
 (`@code-review`, `@tdd`). Локальные правки файлов скилов перезапишет `install`, потому что
 их хеши не совпадут с lock.
 
+## Agent skills
+
+### Issue tracker
+
+Issues и спеки живут в GitHub Issues репозитория `ArachnidSA/ai-for-developers-project-386`,
+все операции — через `gh` CLI. См. `docs/agents/issue-tracker.md`.
+
+### Triage labels
+
+Пять канонических ролей мапятся на одноимённые метки: `needs-triage`, `needs-info`,
+`ready-for-agent`, `ready-for-human`, `wontfix`. См. `docs/agents/triage-labels.md`.
+
+### Domain docs
+
+Раскладка single-context: `GLOSSARY.md` и `docs/adr/` в корне репозитория.
+См. `docs/agents/domain.md`.
+
 ## Не трогать
 
 - `.github/workflows/hexlet-check.yml` — автосгенерированный инструмент курса Hexlet: не
   редактируй, не удаляй и не переименовывай его, и не переименовывай репозиторий
   (см. `.github/workflows/README.md`).
 - `.agents/` — инструментарий агентов (в `.gitignore`); не коммить и не править вручную.
-  Версии скилов фиксирует коммитящийся `skills-lock.json` — см. «Скилы агента».
+  Версии скилов фиксирует коммитящийся `skills-lock.json` — см. «Скилы агента: установка и обновление».

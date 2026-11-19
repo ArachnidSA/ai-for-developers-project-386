@@ -15,7 +15,7 @@ frontend/          React + Vite + TypeScript
 mise.toml          инструменты, задачи, демоны, хуки
 hk.pkl             git-хуки (проверки перед коммитом)
 .github/           CI (hexlet-check, ci, opencode)
-skills-lock.json   версии скилов coding-агентов (см. «Скилы агента»)
+skills-lock.json   версии скилов coding-агентов (см. «Скилы агента: установка и обновление»)
 ```
 
 ## Быстрый старт
