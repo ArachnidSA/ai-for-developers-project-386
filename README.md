@@ -10,11 +10,12 @@
 ## Структура
 
 ```
-backend/    FastAPI-приложение (uv-проект)
-frontend/   React + Vite + TypeScript
-mise.toml   инструменты, задачи, демоны, хуки
-hk.pkl      git-хуки (проверки перед коммитом)
-.github/    CI (hexlet-check, ci, opencode)
+backend/           FastAPI-приложение (uv-проект)
+frontend/          React + Vite + TypeScript
+mise.toml          инструменты, задачи, демоны, хуки
+hk.pkl             git-хуки (проверки перед коммитом)
+.github/           CI (hexlet-check, ci, opencode)
+skills-lock.json   версии скилов coding-агентов (см. «Скилы агента»)
 ```
 
 ## Быстрый старт
@@ -49,6 +50,28 @@ mise daemons status   # состояние сервисов
 cd backend  && uv run fastapi dev app/main.py
 cd frontend && npm run dev
 ```
+
+## Скилы агента
+
+Скилы для coding-агентов ([mattpocock/skills](https://github.com/mattpocock/skills))
+устанавливаются в `.agents/skills/` (каталог в `.gitignore`), а их версии фиксирует
+**`skills-lock.json`** — он коммитится и является источником истины: в нём записаны
+коммит-источник и хеш содержимого каждого скила. Требуется Node 22.20+ — из `mise`
+он уже доступен.
+
+```sh
+npx skills@latest install   # восстановить скилы из skills-lock.json (после клона)
+npx skills@latest update -p # обновить проектные скилы до новых версий
+npx skills@latest list      # что установлено и не разошлось ли с lock
+npx skills@latest add mattpocock/skills   # доставить скилы, которых ещё нет
+```
+
+После `update` или `add` закоммить `skills-lock.json`. Правки файлов внутри
+`.agents/skills/` в коммит не попадут и будут перезаписаны при следующем `install`.
+
+OpenCode видит скилы из `.agents/skills/` автоматически. Чтобы вызвать конкретный,
+упомяните его в промпте как `@<id>`, например `@code-review` или `@tdd` — id
+совпадает с именем каталога скила. Список установленного: `npx skills@latest list`.
 
 ## CI
 

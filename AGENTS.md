@@ -79,9 +79,26 @@ cd frontend && npm run test -- src/App.test.tsx
 - Точка входа бэкенда — `backend/app/main.py`; роутеры лежат в `backend/app/routers/` и
   монтируются под `/api`.
 
+## Скилы агента
+
+Скилы из `mattpocock/skills` лежат в `.agents/skills/` (каталог в `.gitignore`), их версии
+фиксирует коммитящийся **`skills-lock.json`** (коммит-источник + хеш каждого скила).
+Установка и обновление — только через CLI, вручную файлы не трогай:
+
+```sh
+npx skills@latest install    # восстановить .agents/skills из skills-lock.json
+npx skills@latest update -p  # обновить; затем закоммить skills-lock.json
+npx skills@latest list       # состояние: tracked / modified / missing
+```
+
+OpenCode находит их в `.agents/skills/` сам; вызов — `@<id>`, где id равен имени каталога
+(`@code-review`, `@tdd`). Локальные правки файлов скилов перезапишет `install`, потому что
+их хеши не совпадут с lock.
+
 ## Не трогать
 
 - `.github/workflows/hexlet-check.yml` — автосгенерированный инструмент курса Hexlet: не
   редактируй, не удаляй и не переименовывай его, и не переименовывай репозиторий
   (см. `.github/workflows/README.md`).
 - `.agents/` — инструментарий агентов (в `.gitignore`); не коммить и не править вручную.
+  Версии скилов фиксирует коммитящийся `skills-lock.json` — см. «Скилы агента».
