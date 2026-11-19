@@ -1,0 +1,11 @@
+amends "package://github.com/jdx/hk/releases/download/v2.13.0/hk@2.13.0#/Config.pkl"
+
+// Один набор проверок: тот же `mise run check`, что и в CI.
+// Верхнеуровневые steps используются хуками check, fix и pre-commit.
+local checks = new Mapping {
+  ["check"] {
+    check = "mise run check"
+  }
+}
+
+steps = checks

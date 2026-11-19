@@ -1,0 +1,86 @@
+[settings]
+experimental = true
+
+[tools]
+python = "3.14"
+uv = "0.12"
+node = "24"
+hk = "2.13"
+pitchfork = "2.35"
+
+[env]
+NODE_ENV = "development"
+
+[tasks.install]
+description = "Установить зависимости бэкенда и фронтенда"
+run = [
+  "uv sync --directory backend",
+  "npm --prefix frontend ci",
+]
+
+[tasks."lint:backend"]
+dir = "backend"
+run = "uv run ruff check ."
+
+[tasks."lint:frontend"]
+dir = "frontend"
+run = "npm run lint"
+
+[tasks.lint]
+description = "Линтеры бэкенда и фронтенда"
+depends = ["lint:backend", "lint:frontend"]
+
+[tasks."typecheck:backend"]
+dir = "backend"
+run = "uv run mypy app tests"
+
+[tasks."typecheck:frontend"]
+dir = "frontend"
+run = "npm run typecheck"
+
+[tasks.typecheck]
+description = "Проверка типов Python и TypeScript"
+depends = ["typecheck:backend", "typecheck:frontend"]
+
+[tasks."test:backend"]
+dir = "backend"
+run = "uv run pytest"
+
+[tasks."test:frontend"]
+dir = "frontend"
+run = "npm run test"
+
+[tasks.test]
+description = "Дымовые тесты бэкенда и фронтенда"
+depends = ["test:backend", "test:frontend"]
+
+[tasks.check]
+description = "Линтер, проверка типов и дымовые тесты"
+depends = ["lint", "typecheck", "test"]
+
+[tasks."dev:backend"]
+dir = "backend"
+run = "uv run fastapi dev app/main.py --port 8000"
+
+[tasks."dev:frontend"]
+dir = "frontend"
+run = "npm run dev"
+
+[daemons.backend]
+task = "dev:backend"
+ready_port = 8000
+
+[daemons.frontend]
+task = "dev:frontend"
+ready_port = 5173
+
+[tasks.dev]
+description = "Поднять бэкенд и фронтенд как фоновые демоны"
+daemons = ["backend", "frontend"]
+run = "echo backend :8000, frontend :5173"
+
+[tasks.pre-commit]
+run = "hk run pre-commit"
+
+[hooks]
+postinstall = { task = "install" }

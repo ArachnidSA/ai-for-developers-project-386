@@ -1,0 +1,48 @@
+# Environment / secrets
+.env
+.env.*
+!.env.example
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+.venv/
+venv/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Node / frontend
+node_modules/
+.vite/
+*.tsbuildinfo
+.oxlintcache
+
+# Build output
+build/
+dist/
+
+# Test coverage
+.coverage
+coverage/
+htmlcov/
+
+# Logs
+*.log
+
+# OS / editor junk
+.DS_Store
+Thumbs.db
+desktop.ini
+.idea/
+*.iml
+.vscode/
+
+# mise
+mise.local.toml
+mise.local.lock
+
+# agent tooling
+.agents/
