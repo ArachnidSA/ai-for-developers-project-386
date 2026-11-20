@@ -12,14 +12,19 @@ MCP-сервер Render (`https://mcp.render.com/mcp`, транспорт Stream
 задаётся полем `type`. Подробности — в официальной документации:
 <https://opencode.ai/docs/mcp-servers>.
 
-## Вход: API-ключ (а не OAuth)
+## Вход: API-ключ (и альтернатива — OAuth)
 
-Для remote-серверов OpenCode по умолчанию включает OAuth, но с Render этот путь **не
-работает**: авторизационный сервер Render не поддерживает ни Dynamic Client Registration
-(DCR), ни CIMD, поэтому попытка входа завершается ошибкой
-`incompatible auth server does not support dynamic client registration`. По документации
-OpenCode в таком случае нужен предрегистрированный клиент (`oauth.client_id`), которого у нас
-нет, — поэтому используется **API-ключ**.
+Учётные данные хранятся вне репозитория; в `opencode.json` — только ссылка на источник.
+
+**OAuth (альтернатива).** Для remote-серверов OpenCode включает OAuth по умолчанию, но с Render
+«из коробки» он не заводится: авторизационный сервер Render не поддерживает ни Dynamic Client
+Registration (DCR), ни CIMD, поэтому авто-вход падает с
+`incompatible auth server does not support dynamic client registration`. OAuth заработает лишь с
+предрегистрированным клиентом (`oauth.client_id`), которого у нас нет, — и в этом варианте в
+файле секрета всё равно нет.
+
+**API-ключ (используется в конфиге).** Практичный путь для Render — ключ в заголовке
+`Authorization`; значение лежит вне репозитория.
 
 Действующий конфиг (`oauth: false` + заголовок `Authorization`):
 

@@ -14,4 +14,10 @@ services:
     dockerContext: .
     healthCheckPath: /api/healthcheck
     autoDeployTrigger: commit
+    # Переменные окружения сервису не нужны: значения по умолчанию заданы в образе
+    # (DATABASE_URL, FRONTEND_DIST_DIR), а PORT Render подставляет сам. Если понадобится
+    # секрет — задавайте его через sync: false (значение в панели, не в репозитории):
+    # envVars:
+    #   - key: EXAMPLE_SECRET
+    #     sync: false
     repo: https://github.com/ArachnidSA/ai-for-developers-project-386

@@ -74,7 +74,9 @@ Node собирает SPA, python-стадия ставит зависимост
 переменную Render подставляет при деплое.
 
 - **Сервис:** Render Web Service, Environment Docker, тариф Free, регион Frankfurt,
-  health check `/api/healthcheck`, авто-деплой при push в ветку сервиса.
+  health check `/api/healthcheck` (задан в `render.yaml`; MCP-инструмент создания сервиса его
+  не выставляет), авто-деплой при push в ветку сервиса. Сейчас это ветка
+  `spec/35-docker-public-deploy` — после слияния PR её содержимое совпадает с `main`.
 - Локально образ собирается и проверяется задачами `mise run docker:build` и
   `mise run docker:smoke`.
 - Справочное описание сервиса — в [`render.yaml`](render.yaml). Живой сервис создан через
