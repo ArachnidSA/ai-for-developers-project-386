@@ -8,6 +8,7 @@ from app.core.database import get_session
 from app.models.booking import Booking
 from app.models.event_type import EventType, EventTypeStatus
 from app.schemas.event_type import EventTypeCreate, EventTypeRead, EventTypeUpdate
+from app.services.event_types import get_event_type_or_404
 
 router = APIRouter()
 
@@ -34,7 +35,7 @@ def create_event_type(
         name=payload.name,
         description=payload.description,
         duration_minutes=payload.duration_minutes,
-        status=EventTypeStatus.active.value,
+        status=EventTypeStatus.active,
     )
     session.add(event_type)
     session.commit()
@@ -49,9 +50,7 @@ def update_event_type(
     session: Annotated[Session, Depends(get_session)],
 ) -> EventTypeRead:
     """Изменить тип события. Переданные поля обновляются, остальные не трогаются."""
-    event_type = session.get(EventType, event_type_id)
-    if event_type is None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Тип события не найден")
+    event_type = get_event_type_or_404(session, event_type_id)
 
     # Неявный `null` считаем «поле не передано»: контракт допускает пропуск, но не пустое значение.
     for field, value in payload.model_dump(exclude_unset=True, exclude_none=True).items():
@@ -67,9 +66,7 @@ def delete_event_type(
     session: Annotated[Session, Depends(get_session)],
 ) -> None:
     """Удалить тип события без записей. Тип с записями не удаляем — только архивируем."""
-    event_type = session.get(EventType, event_type_id)
-    if event_type is None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Тип события не найден")
+    event_type = get_event_type_or_404(session, event_type_id)
 
     has_bookings = session.scalar(
         select(Booking.id).where(Booking.event_type_id == event_type_id).limit(1)
@@ -90,11 +87,9 @@ def archive_event_type(
     session: Annotated[Session, Depends(get_session)],
 ) -> EventTypeRead:
     """Архивировать тип события: он скрывается от гостей, записи по нему сохраняются."""
-    event_type = session.get(EventType, event_type_id)
-    if event_type is None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Тип события не найден")
+    event_type = get_event_type_or_404(session, event_type_id)
 
-    event_type.status = EventTypeStatus.archived.value
+    event_type.status = EventTypeStatus.archived
     session.commit()
     session.refresh(event_type)
     return EventTypeRead.model_validate(event_type)

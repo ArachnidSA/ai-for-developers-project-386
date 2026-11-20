@@ -2,7 +2,7 @@ from datetime import datetime
 
 from pydantic import BaseModel, ConfigDict, EmailStr, Field, field_validator
 
-from app.services.slots import as_utc
+from app.services.time import as_utc
 
 
 class BookingCreate(BaseModel):
