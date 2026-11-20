@@ -38,6 +38,7 @@ mise daemons status   # состояние сервисов
 | `mise run lint` | `ruff` (бэкенд) и `oxlint` (фронт) |
 | `mise run typecheck` | `mypy` (Python) и `tsc` (TypeScript) |
 | `mise run test` | дымовые тесты: `pytest` (бэкенд) и `vitest` (фронт) |
+| `mise run e2e` | браузерный E2E сценария гостя: Playwright сам поднимает бэкенд и фронт |
 | `mise run check` | всё вместе — используется в CI и в git-хуке |
 | `mise dev` | бэкенд и фронт как демоны |
 
@@ -54,6 +55,17 @@ mise daemons status   # состояние сервисов
 ```sh
 cd backend  && uv run fastapi dev app/main.py
 cd frontend && npm run dev
+```
+
+## E2E (Playwright)
+
+`mise run e2e` прогоняет браузерный сценарий гостя (выбор типа → календарь → запись →
+подтверждение) на **настоящих** серверах: Playwright сам поднимает FastAPI (`127.0.0.1:8000`,
+временная БД `backend/e2e.db`) и Vite (`127.0.0.1:5173`). API бронирования не подменяется.
+Перед первым запуском поставь браузер Chromium:
+
+```sh
+npx --prefix frontend playwright install chromium   # в CI: npx playwright install --with-deps chromium
 ```
 
 ## Скилы агента
