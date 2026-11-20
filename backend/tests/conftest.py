@@ -20,15 +20,17 @@ def session_factory() -> Iterator[sessionmaker[Session]]:
     Тесты используют её, чтобы напрямую подготовить данные (например, записи),
     а HTTP-клиент — чтобы выполнять запросы к той же базе.
     """
-    from app.core.database import Base
+    from app.core.database import Base, configure_sqlite_engine
 
     # Регистрируем модели в metadata до создания таблиц.
     from app.models import booking, event_type  # noqa: F401
 
-    engine = create_engine(
-        "sqlite://",
-        connect_args={"check_same_thread": False},
-        poolclass=StaticPool,
+    engine = configure_sqlite_engine(
+        create_engine(
+            "sqlite://",
+            connect_args={"check_same_thread": False, "timeout": 30},
+            poolclass=StaticPool,
+        )
     )
     Base.metadata.create_all(engine)
     yield sessionmaker(bind=engine, autoflush=False, autocommit=False)
