@@ -44,6 +44,8 @@ mise daemons status   # состояние сервисов
 | `mise run e2e` | браузерный E2E сценария гостя: Playwright сам поднимает бэкенд и фронт |
 | `mise run check:fast` | лёгкая проверка `lint → typecheck → test` — её гоняет git-хук pre-commit |
 | `mise run check` | полная проверка: `check:fast` + `contract` + `e2e` — то же гоняет CI |
+| `mise run docker:build` | собрать Docker-образ приложения (корневой `Dockerfile`) |
+| `mise run docker:smoke` | собрать образ, поднять контейнер на свободном порту и прогнать сценарий (SPA, API, запись, `409`) |
 | `mise dev` | бэкенд и фронт как демоны |
 
 ## Разработка
@@ -60,6 +62,38 @@ mise daemons status   # состояние сервисов
 cd backend  && uv run fastapi dev app/main.py
 cd frontend && npm run dev
 ```
+
+## Деплой (Render)
+
+Публичная ссылка: **https://ai-for-dev-386.onrender.com**
+
+Приложение упаковано в один Docker-образ из корневого [`Dockerfile`](Dockerfile): стадия на
+Node собирает SPA, python-стадия ставит зависимости бэкенда и отдаёт статику вместе с `/api`
+одним процессом FastAPI (fastapi отдаёт и SPA, и API на одном порту). Контейнер стартует без
+ручных команд и слушает `0.0.0.0` и порт из переменной `PORT` (по умолчанию 8000) — эту
+переменную Render подставляет при деплое.
+
+- **Сервис:** Render Web Service, Environment Docker, тариф Free, регион Frankfurt,
+  health check `/api/healthcheck`, авто-деплой при push в ветку сервиса.
+- Локально образ собирается и проверяется задачами `mise run docker:build` и
+  `mise run docker:smoke`.
+- Справочное описание сервиса — в [`render.yaml`](render.yaml). Живой сервис создан через
+  MCP-сервер Render (`create_web_service`), который `render.yaml` не читает.
+
+### Хранение данных
+
+Хранилище — SQLite-файл **внутри контейнера** (`DATABASE_URL=sqlite:////app/data/calendar.db`).
+**Данные сбрасываются** при перезапуске контейнера и при редеплое: внешнего тома у сервиса нет,
+поэтому после пересборки/перезапуска каталог пуст, а типы событий и записи приходится заводить
+заново. Для сохранения между деплоями нужен внешний том или управляемая БД — сейчас этого нет
+сознательно, см. [`docs/adr/0006-ephemeral-storage-on-hosting.md`](docs/adr/0006-ephemeral-storage-on-hosting.md).
+
+### Подключение MCP-сервера Render
+
+Проектный [`opencode.json`](opencode.json) подключает hosted MCP-сервер Render **без секретов**:
+в конфиге только ссылка на источник ключа, а само значение лежит вне репозитория (`render-api-key`
+закрыт `.gitignore` и `.dockerignore`). Порядок подключения, получение ключа и альтернативы
+описаны в [`docs/mcp-render.md`](docs/mcp-render.md).
 
 ## E2E (Playwright)
 
