@@ -4,21 +4,28 @@ import { expect, test, type APIRequestContext, type Page } from '@playwright/tes
 // на FastAPI (:8000). API бронирования не подменяется — никаких page.route().
 const BACKEND_URL = 'http://127.0.0.1:8000'
 
-// День берём по индексу 1 (завтра по локальной дате браузера): он всегда попадает
-// в окно записи владельца (14 дней от его «сегодня») и гарантированно содержит
-// свободные слоты 09:00–21:00. Подробности — 23-notes.md.
+// Пояс владельца: окно записи (14 дней от «сегодня») строится в нём — как в BookPage.
+const OWNER_TIME_ZONE = 'Asia/Yekaterinburg'
+
+// День берём по индексу 1 (завтра по поясу владельца): он всегда попадает
+// в окно записи и гарантированно содержит свободные слоты 09:00–21:00.
 const DAY_INDEX = 1
 
 type EventType = { id: number; name: string; description: string; duration_minutes: number }
 type Slot = { start: string; end: string }
 
-/** Ближайший календарный день как `YYYY-MM-DD` по локальной дате (как в BookPage). */
-function localDay(offsetDays: number): string {
-  const now = new Date()
-  const day = new Date(now.getFullYear(), now.getMonth(), now.getDate() + offsetDays)
-  const month = String(day.getMonth() + 1).padStart(2, '0')
-  const date = String(day.getDate()).padStart(2, '0')
-  return `${day.getFullYear()}-${month}-${date}`
+/** Календарный день `YYYY-MM-DD` в поясе владельца со сдвигом `offsetDays`. */
+function ownerDay(offsetDays: number): string {
+  const parts = new Intl.DateTimeFormat('en-US', {
+    timeZone: OWNER_TIME_ZONE,
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).formatToParts(new Date())
+  const part = (type: string): string => parts.find((item) => item.type === type)?.value ?? ''
+  const today = `${part('year')}-${part('month')}-${part('day')}`
+  const [year, month, date] = today.split('-').map(Number)
+  return new Date(Date.UTC(year, month - 1, date + offsetDays)).toISOString().slice(0, 10)
 }
 
 function escapeRegExp(value: string): string {
@@ -99,7 +106,7 @@ test('гость выбирает тип, день и записывается �
 test('конфликт на занятый слот показывает понятное сообщение', async ({ page, request }) => {
   const name = `Созвон ${Date.now()} конфликт`
   const eventType = await createEventType(request, name)
-  const day = localDay(DAY_INDEX)
+  const day = ownerDay(DAY_INDEX)
 
   await page.goto('/book')
   await selectEventType(page, name)

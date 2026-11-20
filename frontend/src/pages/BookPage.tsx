@@ -4,9 +4,7 @@ import { Link } from 'react-router-dom'
 import { BookingConflictError, createBooking, type Booking } from '@/api/bookings'
 import { listEventTypes, type EventType } from '@/api/eventTypes'
 import { listEventTypeSlots, type Slot } from '@/api/slots'
-
-// Окно записи: 14 календарных дней от «сегодня» (см. GLOSSARY.md).
-const BOOKING_WINDOW_DAYS = 14
+import { bookingDays } from '@/lib/dates'
 
 const dayLabelFormatter = new Intl.DateTimeFormat('ru-RU', {
   day: 'numeric',
@@ -19,30 +17,15 @@ const timeFormatter = new Intl.DateTimeFormat('ru-RU', {
   minute: '2-digit',
 })
 
-/** Календарный день как `YYYY-MM-DD` по локальной дате. */
-function toIsoDay(day: Date): string {
-  const month = String(day.getMonth() + 1).padStart(2, '0')
-  const date = String(day.getDate()).padStart(2, '0')
-  return `${day.getFullYear()}-${month}-${date}`
-}
-
-/** Ближайшие `count` календарных дней, начиная с сегодняшнего. */
-function nextDays(count: number): string[] {
-  const today = new Date()
-  return Array.from({ length: count }, (_, index) =>
-    toIsoDay(new Date(today.getFullYear(), today.getMonth(), today.getDate() + index)),
-  )
-}
-
 function formatDay(iso: string): string {
   const [year, month, date] = iso.split('-').map(Number)
   return dayLabelFormatter.format(new Date(year, month - 1, date))
 }
 
-/** Время интервала в локальном поясе гостя (в API время приходит в UTC). */
-function formatTimeRange(interval: Slot): string {
-  const start = timeFormatter.format(new Date(interval.start))
-  const end = timeFormatter.format(new Date(interval.end))
+/** Время слота в локальном поясе гостя (в API время приходит в UTC). */
+function formatTimeRange(slot: Slot): string {
+  const start = timeFormatter.format(new Date(slot.start))
+  const end = timeFormatter.format(new Date(slot.end))
   return `${start}–${end}`
 }
 
@@ -64,7 +47,7 @@ function BookPage() {
   const [formError, setFormError] = useState<string | null>(null)
   const [created, setCreated] = useState<Booking | null>(null)
 
-  const days = nextDays(BOOKING_WINDOW_DAYS)
+  const [days] = useState(() => bookingDays(new Date()))
 
   useEffect(() => {
     listEventTypes()

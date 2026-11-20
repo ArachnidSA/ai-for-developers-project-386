@@ -5,6 +5,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { BookingConflictError, createBooking, type Booking } from '@/api/bookings'
 import { listEventTypes, type EventType } from '@/api/eventTypes'
 import { listEventTypeSlots, type Slot } from '@/api/slots'
+import { addDays, dayInTimeZone } from '@/lib/dates'
 
 import { BookPage } from './BookPage'
 
@@ -54,12 +55,9 @@ const CREATED_BOOKING: Booking = {
   end: MORNING_SLOT.end,
 }
 
-function localIso(offsetDays = 0): string {
-  const now = new Date()
-  const day = new Date(now.getFullYear(), now.getMonth(), now.getDate() + offsetDays)
-  const month = String(day.getMonth() + 1).padStart(2, '0')
-  const date = String(day.getDate()).padStart(2, '0')
-  return `${day.getFullYear()}-${month}-${date}`
+/** День окна как `YYYY-MM-DD` по дате владельца (окно строится в его поясе). */
+function ownerIso(offsetDays = 0): string {
+  return addDays(dayInTimeZone(new Date()), offsetDays)
 }
 
 function renderBookPage() {
@@ -104,7 +102,7 @@ describe('экран записи гостя', () => {
     selectDay(0)
 
     await waitFor(() =>
-      expect(listEventTypeSlotsMock).toHaveBeenCalledWith(MEETING.id, localIso(0)),
+      expect(listEventTypeSlotsMock).toHaveBeenCalledWith(MEETING.id, ownerIso(0)),
     )
   })
 

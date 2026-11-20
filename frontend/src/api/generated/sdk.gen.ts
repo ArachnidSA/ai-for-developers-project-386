@@ -2,7 +2,7 @@
 
 import type { Client, ClientMeta, Options as Options2, RequestResult, TDataShape } from './client';
 import { client } from './client.gen';
-import type { CalendarApiArchiveEventTypeData, CalendarApiArchiveEventTypeErrors, CalendarApiArchiveEventTypeResponses, CalendarApiCreateBookingData, CalendarApiCreateBookingErrors, CalendarApiCreateBookingResponses, CalendarApiCreateEventTypeData, CalendarApiCreateEventTypeResponses, CalendarApiDeleteBookingData, CalendarApiDeleteBookingErrors, CalendarApiDeleteBookingResponses, CalendarApiDeleteEventTypeData, CalendarApiDeleteEventTypeErrors, CalendarApiDeleteEventTypeResponses, CalendarApiListEventTypesData, CalendarApiListEventTypeSlotsData, CalendarApiListEventTypeSlotsResponses, CalendarApiListEventTypesResponses, CalendarApiListUpcomingBookingsData, CalendarApiListUpcomingBookingsResponses, CalendarApiUpdateEventTypeData, CalendarApiUpdateEventTypeErrors, CalendarApiUpdateEventTypeResponses } from './types.gen';
+import type { CalendarApiArchiveEventTypeData, CalendarApiArchiveEventTypeErrors, CalendarApiArchiveEventTypeResponses, CalendarApiCreateBookingData, CalendarApiCreateBookingErrors, CalendarApiCreateBookingResponses, CalendarApiCreateEventTypeData, CalendarApiCreateEventTypeResponses, CalendarApiDeleteBookingData, CalendarApiDeleteBookingErrors, CalendarApiDeleteBookingResponses, CalendarApiDeleteEventTypeData, CalendarApiDeleteEventTypeErrors, CalendarApiDeleteEventTypeResponses, CalendarApiListEventTypesData, CalendarApiListEventTypeSlotsData, CalendarApiListEventTypeSlotsErrors, CalendarApiListEventTypeSlotsResponses, CalendarApiListEventTypesResponses, CalendarApiListUpcomingBookingsData, CalendarApiListUpcomingBookingsResponses, CalendarApiUpdateEventTypeData, CalendarApiUpdateEventTypeErrors, CalendarApiUpdateEventTypeResponses } from './types.gen';
 
 export type Options<TData extends TDataShape = TDataShape, ThrowOnError extends boolean = boolean, TResponse = unknown> = Options2<TData, ThrowOnError, TResponse> & {
     /**
@@ -28,6 +28,7 @@ export const calendarApiListUpcomingBookings = <ThrowOnError extends boolean = f
  * Создать запись гостем. `end` вычисляется сервером как `start + duration_minutes` типа.
  * Неизвестный или архивный тип — 404; время вне рабочих часов или окна записи — 400;
  * пересечение с любой существующей записью (в т.ч. другого типа) — 409.
+ * `422` (некорректные поля тела) отдаёт валидация FastAPI и в контракт не входит.
  */
 export const calendarApiCreateBooking = <ThrowOnError extends boolean = false>(options: Options<CalendarApiCreateBookingData, ThrowOnError>): RequestResult<CalendarApiCreateBookingResponses, CalendarApiCreateBookingErrors, ThrowOnError> => (options.client ?? client).post<CalendarApiCreateBookingResponses, CalendarApiCreateBookingErrors, ThrowOnError>({
     url: '/api/bookings',
@@ -88,5 +89,6 @@ export const calendarApiArchiveEventType = <ThrowOnError extends boolean = false
  * Свободные слоты типа события на календарный день в поясе владельца.
  * Слоты идут встык с шагом, равным длительности типа, и не выходят за рабочие часы 09:00–21:00.
  * Неизвестный или архивный тип — 404; дата вне окна записи (14 дней от «сегодня») — 400.
+ * `422` (некорректный формат даты) отдаёт валидация FastAPI и в контракт не входит.
  */
-export const calendarApiListEventTypeSlots = <ThrowOnError extends boolean = false>(options: Options<CalendarApiListEventTypeSlotsData, ThrowOnError>): RequestResult<CalendarApiListEventTypeSlotsResponses, unknown, ThrowOnError> => (options.client ?? client).get<CalendarApiListEventTypeSlotsResponses, unknown, ThrowOnError>({ url: '/api/event-types/{event_type_id}/slots', ...options });
+export const calendarApiListEventTypeSlots = <ThrowOnError extends boolean = false>(options: Options<CalendarApiListEventTypeSlotsData, ThrowOnError>): RequestResult<CalendarApiListEventTypeSlotsResponses, CalendarApiListEventTypeSlotsErrors, ThrowOnError> => (options.client ?? client).get<CalendarApiListEventTypeSlotsResponses, CalendarApiListEventTypeSlotsErrors, ThrowOnError>({ url: '/api/event-types/{event_type_id}/slots', ...options });

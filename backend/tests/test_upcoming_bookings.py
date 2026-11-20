@@ -1,35 +1,10 @@
-from datetime import UTC, date, datetime, time, timedelta
-from zoneinfo import ZoneInfo
+from datetime import datetime, timedelta
 
-from app.models.booking import Booking
 from app.models.event_type import EventType, EventTypeStatus
 from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session, sessionmaker
 
-# Границы из спеки: рабочие часы 09:00–21:00 в поясе владельца.
-OWNER_TZ = ZoneInfo("Asia/Yekaterinburg")
-
-
-def owner_today() -> date:
-    """Сегодняшний день в поясе владельца."""
-    return datetime.now(OWNER_TZ).date()
-
-
-def owner_time(day: date, hour: int, minute: int) -> datetime:
-    """Время в поясе владельца, переведённое в UTC."""
-    return datetime.combine(day, time(hour, minute), tzinfo=OWNER_TZ).astimezone(UTC)
-
-
-def create_event_type(client: TestClient, name: str, duration_minutes: int) -> int:
-    """Заводит тип события через API и возвращает его id."""
-    response = client.post(
-        "/api/event-types",
-        json={"name": name, "description": "", "duration_minutes": duration_minutes},
-    )
-    assert response.status_code == 201
-    event_type_id = response.json()["id"]
-    assert isinstance(event_type_id, int)
-    return event_type_id
+from conftest import add_booking, create_event_type, owner_time, owner_today
 
 
 def archive_event_type(session_factory: sessionmaker[Session], event_type_id: int) -> None:
@@ -37,32 +12,7 @@ def archive_event_type(session_factory: sessionmaker[Session], event_type_id: in
     with session_factory() as session:
         event_type = session.get(EventType, event_type_id)
         assert event_type is not None
-        event_type.status = EventTypeStatus.archived.value
-        session.commit()
-
-
-def add_booking(
-    session_factory: sessionmaker[Session],
-    event_type_id: int,
-    start: datetime,
-    end: datetime,
-    *,
-    guest_name: str = "Гость",
-    guest_email: str | None = None,
-    note: str | None = None,
-) -> None:
-    """Кладёт запись в БД напрямую (в UTC), минуя HTTP."""
-    with session_factory() as session:
-        session.add(
-            Booking(
-                event_type_id=event_type_id,
-                guest_name=guest_name,
-                guest_email=guest_email,
-                note=note,
-                start=start.astimezone(UTC).replace(tzinfo=None),
-                end=end.astimezone(UTC).replace(tzinfo=None),
-            )
-        )
+        event_type.status = EventTypeStatus.archived
         session.commit()
 
 
@@ -71,7 +21,7 @@ def test_list_returns_upcoming_bookings_sorted_with_contract_fields(
     session_factory: sessionmaker[Session],
 ) -> None:
     day = owner_today() + timedelta(days=1)
-    event_type_id = create_event_type(client, "Консультация", 60)
+    event_type_id = create_event_type(client, name="Консультация", duration_minutes=60)["id"]
     add_booking(
         session_factory,
         event_type_id,
@@ -106,13 +56,36 @@ def test_list_returns_upcoming_bookings_sorted_with_contract_fields(
     assert datetime.fromisoformat(first["end"]) == owner_time(day, 11, 0)
 
 
+def test_list_omits_unspecified_optional_fields(
+    client: TestClient,
+    session_factory: sessionmaker[Session],
+) -> None:
+    """Предстоящая запись без email и заметки не отдаёт `null` — поля отсутствуют."""
+    day = owner_today() + timedelta(days=1)
+    event_type_id = create_event_type(client, name="Звонок", duration_minutes=30)["id"]
+    add_booking(
+        session_factory,
+        event_type_id,
+        owner_time(day, 10, 0),
+        owner_time(day, 10, 30),
+        guest_name="Анна",
+    )
+
+    response = client.get("/api/bookings")
+
+    assert response.status_code == 200
+    (item,) = response.json()
+    assert "guest_email" not in item
+    assert "note" not in item
+
+
 def test_list_excludes_past_bookings(
     client: TestClient,
     session_factory: sessionmaker[Session],
 ) -> None:
     past_day = owner_today() - timedelta(days=1)
     future_day = owner_today() + timedelta(days=1)
-    event_type_id = create_event_type(client, "Звонок", 30)
+    event_type_id = create_event_type(client, name="Звонок", duration_minutes=30)["id"]
     add_booking(
         session_factory,
         event_type_id,
@@ -139,7 +112,7 @@ def test_list_includes_bookings_of_archived_event_types(
     session_factory: sessionmaker[Session],
 ) -> None:
     day = owner_today() + timedelta(days=1)
-    event_type_id = create_event_type(client, "Архивный звонок", 30)
+    event_type_id = create_event_type(client, name="Архивный звонок", duration_minutes=30)["id"]
     archive_event_type(session_factory, event_type_id)
     add_booking(
         session_factory,
@@ -162,7 +135,7 @@ def test_delete_booking_frees_its_slot(
     client: TestClient,
 ) -> None:
     day = owner_today() + timedelta(days=1)
-    event_type_id = create_event_type(client, "Звонок", 60)
+    event_type_id = create_event_type(client, name="Звонок", duration_minutes=60)["id"]
     start = owner_time(day, 10, 0)
     created = client.post(
         "/api/bookings",

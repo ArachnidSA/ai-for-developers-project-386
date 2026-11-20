@@ -9,7 +9,7 @@
     "/api/bookings": {
       "post": {
         "operationId": "CalendarApi_createBooking",
-        "description": "Создать запись гостем. `end` вычисляется сервером как `start + duration_minutes` типа.\nНеизвестный или архивный тип — 404; время вне рабочих часов или окна записи — 400;\nпересечение с любой существующей записью (в т.ч. другого типа) — 409.",
+        "description": "Создать запись гостем. `end` вычисляется сервером как `start + duration_minutes` типа.\nНеизвестный или архивный тип — 404; время вне рабочих часов или окна записи — 400;\nпересечение с любой существующей записью (в т.ч. другого типа) — 409.\n`422` (некорректные поля тела) отдаёт валидация FastAPI и в контракт не входит.",
         "parameters": [],
         "responses": {
           "201": {
@@ -18,6 +18,26 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/Booking"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The server could not understand the request due to invalid syntax.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "The server cannot find the requested resource.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
                 }
               }
             }
@@ -293,7 +313,7 @@
     "/api/event-types/{event_type_id}/slots": {
       "get": {
         "operationId": "CalendarApi_listEventTypeSlots",
-        "description": "Свободные слоты типа события на календарный день в поясе владельца.\nСлоты идут встык с шагом, равным длительности типа, и не выходят за рабочие часы 09:00–21:00.\nНеизвестный или архивный тип — 404; дата вне окна записи (14 дней от «сегодня») — 400.",
+        "description": "Свободные слоты типа события на календарный день в поясе владельца.\nСлоты идут встык с шагом, равным длительности типа, и не выходят за рабочие часы 09:00–21:00.\nНеизвестный или архивный тип — 404; дата вне окна записи (14 дней от «сегодня») — 400.\n`422` (некорректный формат даты) отдаёт валидация FastAPI и в контракт не входит.",
         "parameters": [
           {
             "name": "event_type_id",
@@ -327,6 +347,26 @@
                   "items": {
                     "$ref": "#/components/schemas/Slot"
                   }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The server could not understand the request due to invalid syntax.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "The server cannot find the requested resource.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
                 }
               }
             }
@@ -376,11 +416,11 @@
           },
           "guest_email": {
             "type": "string",
-            "description": "Email гостя."
+            "description": "Email гостя. Поле отсутствует, если гость его не указал (сервер не шлёт `null`)."
           },
           "note": {
             "type": "string",
-            "description": "Заметка гостя."
+            "description": "Заметка гостя. Поле отсутствует, если гость её не оставил (сервер не шлёт `null`)."
           },
           "start": {
             "type": "string",
@@ -579,11 +619,11 @@
           },
           "guest_email": {
             "type": "string",
-            "description": "Email гостя."
+            "description": "Email гостя. Поле отсутствует, если гость его не указал (сервер не шлёт `null`)."
           },
           "note": {
             "type": "string",
-            "description": "Заметка гостя."
+            "description": "Заметка гостя. Поле отсутствует, если гость её не оставил (сервер не шлёт `null`)."
           },
           "start": {
             "type": "string",

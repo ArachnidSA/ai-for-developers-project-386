@@ -22,4 +22,4 @@ class EventType(Base):
     name: Mapped[str] = mapped_column(String(200))
     description: Mapped[str] = mapped_column(String(500), default="")
     duration_minutes: Mapped[int] = mapped_column()
-    status: Mapped[str] = mapped_column(String(20), default=EventTypeStatus.active.value)
+    status: Mapped[str] = mapped_column(String(20), default=EventTypeStatus.active)
