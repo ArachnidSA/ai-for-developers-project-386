@@ -5,37 +5,23 @@ MCP-сервер Render (`https://mcp.render.com/mcp`, транспорт Stream
 агенту OpenCode управлять сервисом на Render — например, создавать Web Service из
 корневого `Dockerfile`.
 
-> Секретов в репозитории нет. В `opencode.json` указан только адрес сервера; учётные данные
-> хранятся вне проекта (OAuth-токены — в `~/.local/share/opencode/mcp-auth.json`).
+> Секретов в репозитории нет: в `opencode.json` хранится только ссылка на источник ключа
+> (`{file:...}` или `{env:...}`), а само значение — вне проекта.
 
 Форма конфигурации — OpenCode V2: имена серверов лежат под `mcp.servers.<имя>`, тип remote
 задаётся полем `type`. Подробности — в официальной документации:
 <https://opencode.ai/docs/mcp-servers>.
 
-## Вариант 1 (по умолчанию): OAuth, без ключа
+## Вход: API-ключ (а не OAuth)
 
-Для remote-серверов OAuth включён по умолчанию, поэтому в `opencode.json` достаточно одной
-строки `url`. Вход выполняется один раз в браузере:
+Для remote-серверов OpenCode по умолчанию включает OAuth, но с Render этот путь **не
+работает**: авторизационный сервер Render не поддерживает ни Dynamic Client Registration
+(DCR), ни CIMD, поэтому попытка входа завершается ошибкой
+`incompatible auth server does not support dynamic client registration`. По документации
+OpenCode в таком случае нужен предрегистрированный клиент (`oauth.client_id`), которого у нас
+нет, — поэтому используется **API-ключ**.
 
-1. Откройте OpenCode в этом проекте.
-2. Выполните `/mcps`, выберите сервер **render** и войдите в браузере.
-   В терминале то же самое делает команда `opencode mcp auth render`.
-3. Убедитесь, что сервер подключён:
-
-   ```sh
-   opencode mcp list
-   ```
-
-   До входа статус может быть `needs authentication` — это нормально и секрета не требует;
-   после входа — `connected`.
-
-Токены OAuth хранятся вне репозитория и повторный вход переживают.
-
-## Вариант 2 (альтернатива): API-ключ из переменной окружения
-
-Если нужен ключ вместо OAuth, отключите OAuth (`oauth: false`) и передайте ключ заголовком.
-В файле хранится **только имя** переменной — значение живёт в окружении хоста и в
-репозиторий не попадает:
+Действующий конфиг (`oauth: false` + заголовок `Authorization`):
 
 ```json
 {
@@ -46,7 +32,7 @@ MCP-сервер Render (`https://mcp.render.com/mcp`, транспорт Stream
         "url": "https://mcp.render.com/mcp",
         "oauth": false,
         "headers": {
-          "Authorization": "Bearer {env:RENDER_API_KEY}"
+          "Authorization": "Bearer {file:~/.config/opencode/render-api-key}"
         }
       }
     }
@@ -54,41 +40,53 @@ MCP-сервер Render (`https://mcp.render.com/mcp`, транспорт Stream
 }
 ```
 
-Порядок:
+### Как получить ключ
 
-1. Создайте ключ в Render: **Dashboard → Workspace Settings → API Keys**
-   (<https://render.com/docs/api-keys>).
-2. Задайте его в окружении, из которого запускается OpenCode, а не в файле:
+Render Dashboard → **Account Settings** → **API Keys** → **Create API Key**
+(<https://render.com/docs/api-keys>). Ключ показывается один раз — скопируйте сразу.
 
-   ```sh
-   # Linux/macOS
-   export RENDER_API_KEY="rnd_..."
-   ```
+### Куда положить значение (вне репозитория)
 
-   ```powershell
-   # Windows PowerShell
-   $env:RENDER_API_KEY = "rnd_..."
-   ```
+**Вариант А — файл (используется в конфиге сейчас; не требует перезапуска приложения).**
+Положите в файл `~/.config/opencode/render-api-key` (Windows:
+`C:\Users\<вы>\.config\opencode\render-api-key`) **только сам ключ**, без перевода строки и
+кавычек. OpenCode подставляет содержимое файла в заголовок и перечитывает конфиг при
+сохранении.
 
-3. Перезапустите сессию и проверьте: `opencode mcp list`.
+**Вариант Б — переменная окружения.** Замените в `opencode.json` заголовок на
+`"Authorization": "Bearer {env:RENDER_API_KEY}"` и задайте переменную до запуска OpenCode:
 
-Кроме `{env:NAME}` OpenCode умеет подставлять содержимое файла — `{file:path/to/file}` (путь
-абсолютный, относительный к файлу конфига или начинающийся с `~/`). Shell-выражения вида
-`$NAME` в строках JSON не раскрываются; если переменная или файл не заданы, подставляется
-пустая строка.
+```powershell
+# Windows PowerShell (на текущую сессию)
+$env:RENDER_API_KEY = "<ключ>"
+# постоянно (нужен перезапуск приложения OpenCode)
+setx RENDER_API_KEY "<ключ>"
+```
+
+```sh
+# Linux/macOS
+export RENDER_API_KEY="<ключ>"
+```
+
+Shell-выражения вида `$NAME` внутри строк JSON не раскрываются; если файл или переменная не
+заданы, подставляется пустая строка.
 
 ## Проверка подключения
 
-- `opencode mcp list` — список настроенных серверов и их состояний. Сервер `render` в этом
-  списке уже означает, что проектный `opencode.json` подхвачен.
+```sh
+opencode mcp auth --help   # справка
+opencode mcp list          # список серверов и состояний
+```
+
+- Сервер `render` в списке уже означает, что проектный `opencode.json` подхвачен.
+- До появления ключа статус — `needs authentication`; после — `connected`.
 - `/mcps` в интерфейсе OpenCode — состояние, вход и отключение сервера.
-- Если статус `failed` с ошибкой вида `ECONNRESET`, это проблема сети окружения (прокси или
-  файрвол), а не конфигурации: сам эндпоинт `https://mcp.render.com/mcp` на неаутентифицированный
-  запрос отвечает `401` с заголовком `WWW-Authenticate` и метаданными OAuth.
+- Статус `failed` с ошибкой вида `ECONNRESET` — не про конфигурацию, а про сеть окружения.
 
 ## Ссылки
 
 - Render MCP Server: <https://render.com/docs/mcp-server>
+- Render API keys: <https://render.com/docs/api-keys>
 - OpenCode — MCP servers (V2): <https://opencode.ai/docs/mcp-servers>
 - Исследование по схеме конфигурации: ветка `research/render-mcp`,
   `docs/research/render-mcp-and-opencode-json.md`

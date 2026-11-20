@@ -4,7 +4,11 @@
     "servers": {
       "render": {
         "type": "remote",
-        "url": "https://mcp.render.com/mcp"
+        "url": "https://mcp.render.com/mcp",
+        "oauth": false,
+        "headers": {
+          "Authorization": "Bearer {file:~/.config/opencode/render-api-key}"
+        }
       }
     }
   }
