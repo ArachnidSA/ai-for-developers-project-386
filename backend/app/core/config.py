@@ -11,6 +11,8 @@ class Settings(BaseSettings):
     )
 
     app_name: str = "ai-for-developers-project-386 API"
+    # Строка подключения SQLAlchemy. По умолчанию — файл SQLite рядом с приложением.
+    database_url: str = "sqlite:///./calendar.db"
     # Origins, которым разрешены запросы к API (для CORS).
     cors_origins: list[str] = ["http://localhost:5173"]
 
