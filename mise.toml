@@ -26,6 +26,11 @@ run = [
   "npm --prefix contract run gen",
 ]
 
+[tasks.contract]
+description = "Сгенерировать артефакты из контракта и проверить, что они не разошлись с закоммиченными"
+depends = ["gen"]
+run = "node scripts/check-contract-drift.mjs"
+
 [tasks."lint:backend"]
 dir = "backend"
 run = "uv run ruff check ."
