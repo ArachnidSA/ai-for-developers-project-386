@@ -30,6 +30,7 @@ frontend/e2e/test-results
 # Локальные секреты, документация и артефакты разработки.
 .env
 .env.*
+render-api-key
 docs
 contract
 scripts
