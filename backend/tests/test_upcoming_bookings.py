@@ -106,6 +106,29 @@ def test_list_returns_upcoming_bookings_sorted_with_contract_fields(
     assert datetime.fromisoformat(first["end"]) == owner_time(day, 11, 0)
 
 
+def test_list_omits_unspecified_optional_fields(
+    client: TestClient,
+    session_factory: sessionmaker[Session],
+) -> None:
+    """Предстоящая запись без email и заметки не отдаёт `null` — поля отсутствуют."""
+    day = owner_today() + timedelta(days=1)
+    event_type_id = create_event_type(client, "Звонок", 30)
+    add_booking(
+        session_factory,
+        event_type_id,
+        owner_time(day, 10, 0),
+        owner_time(day, 10, 30),
+        guest_name="Анна",
+    )
+
+    response = client.get("/api/bookings")
+
+    assert response.status_code == 200
+    (item,) = response.json()
+    assert "guest_email" not in item
+    assert "note" not in item
+
+
 def test_list_excludes_past_bookings(
     client: TestClient,
     session_factory: sessionmaker[Session],

@@ -71,9 +71,9 @@ model Booking {
   event_type_id: int32;
   /** Имя гостя. */
   guest_name: string;
-  /** Email гостя. */
+  /** Email гостя. Поле отсутствует, если гость его не указал (сервер не шлёт `null`). */
   guest_email?: string;
-  /** Заметка гостя. */
+  /** Заметка гостя. Поле отсутствует, если гость её не оставил (сервер не шлёт `null`). */
   note?: string;
   /** Начало встречи в UTC (ISO 8601). */
   start: utcDateTime;
@@ -109,9 +109,9 @@ model UpcomingBooking {
   event_type_name: string;
   /** Имя гостя. */
   guest_name: string;
-  /** Email гостя. */
+  /** Email гостя. Поле отсутствует, если гость его не указал (сервер не шлёт `null`). */
   guest_email?: string;
-  /** Заметка гостя. */
+  /** Заметка гостя. Поле отсутствует, если гость её не оставил (сервер не шлёт `null`). */
   note?: string;
   /** Начало встречи в UTC (ISO 8601). */
   start: utcDateTime;
@@ -198,6 +198,7 @@ namespace CalendarApi {
    * Свободные слоты типа события на календарный день в поясе владельца.
    * Слоты идут встык с шагом, равным длительности типа, и не выходят за рабочие часы 09:00–21:00.
    * Неизвестный или архивный тип — 404; дата вне окна записи (14 дней от «сегодня») — 400.
+   * `422` (некорректный формат даты) отдаёт валидация FastAPI и в контракт не входит.
    */
   @route("/event-types/{event_type_id}/slots")
   @get
@@ -206,18 +207,34 @@ namespace CalendarApi {
     @path event_type_id: int32,
     /** Календарный день в поясе владельца (YYYY-MM-DD). */
     @query date: plainDate,
-  ): Slot[];
+  ): {
+    @statusCode statusCode: 200;
+    @body body: Slot[];
+  } | {
+    @statusCode statusCode: 400;
+    @body body: ApiError;
+  } | {
+    @statusCode statusCode: 404;
+    @body body: ApiError;
+  };
 
   /**
    * Создать запись гостем. `end` вычисляется сервером как `start + duration_minutes` типа.
    * Неизвестный или архивный тип — 404; время вне рабочих часов или окна записи — 400;
    * пересечение с любой существующей записью (в т.ч. другого типа) — 409.
+   * `422` (некорректные поля тела) отдаёт валидация FastAPI и в контракт не входит.
    */
   @route("/bookings")
   @post
   op createBooking(@body body: BookingCreate): {
     @statusCode statusCode: 201;
     @body body: Booking;
+  } | {
+    @statusCode statusCode: 400;
+    @body body: ApiError;
+  } | {
+    @statusCode statusCode: 404;
+    @body body: ApiError;
   } | {
     @statusCode statusCode: 409;
     @body body: ApiError;

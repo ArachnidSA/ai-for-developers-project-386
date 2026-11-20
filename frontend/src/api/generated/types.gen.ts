@@ -31,11 +31,11 @@ export type Booking = {
      */
     guest_name: string;
     /**
-     * Email гостя.
+     * Email гостя. Поле отсутствует, если гость его не указал (сервер не шлёт `null`).
      */
     guest_email?: string;
     /**
-     * Заметка гостя.
+     * Заметка гостя. Поле отсутствует, если гость её не оставил (сервер не шлёт `null`).
      */
     note?: string;
     /**
@@ -176,11 +176,11 @@ export type UpcomingBooking = {
      */
     guest_name: string;
     /**
-     * Email гостя.
+     * Email гостя. Поле отсутствует, если гость его не указал (сервер не шлёт `null`).
      */
     guest_email?: string;
     /**
-     * Заметка гостя.
+     * Заметка гостя. Поле отсутствует, если гость её не оставил (сервер не шлёт `null`).
      */
     note?: string;
     /**
@@ -217,6 +217,14 @@ export type CalendarApiCreateBookingData = {
 };
 
 export type CalendarApiCreateBookingErrors = {
+    /**
+     * The server could not understand the request due to invalid syntax.
+     */
+    400: ApiError;
+    /**
+     * The server cannot find the requested resource.
+     */
+    404: ApiError;
     /**
      * The request conflicts with the current state of the server.
      */
@@ -411,6 +419,19 @@ export type CalendarApiListEventTypeSlotsData = {
     };
     url: '/api/event-types/{event_type_id}/slots';
 };
+
+export type CalendarApiListEventTypeSlotsErrors = {
+    /**
+     * The server could not understand the request due to invalid syntax.
+     */
+    400: ApiError;
+    /**
+     * The server cannot find the requested resource.
+     */
+    404: ApiError;
+};
+
+export type CalendarApiListEventTypeSlotsError = CalendarApiListEventTypeSlotsErrors[keyof CalendarApiListEventTypeSlotsErrors];
 
 export type CalendarApiListEventTypeSlotsResponses = {
     /**

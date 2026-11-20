@@ -21,7 +21,7 @@ from app.services.slots import (
 router = APIRouter()
 
 
-@router.get("/bookings")
+@router.get("/bookings", response_model_exclude_none=True)
 def list_upcoming_bookings(
     session: Annotated[Session, Depends(get_session)],
 ) -> list[UpcomingBookingRead]:
@@ -52,7 +52,7 @@ def list_upcoming_bookings(
     ]
 
 
-@router.post("/bookings", status_code=status.HTTP_201_CREATED)
+@router.post("/bookings", status_code=status.HTTP_201_CREATED, response_model_exclude_none=True)
 def create_booking(
     payload: BookingCreate,
     session: Annotated[Session, Depends(get_session)],

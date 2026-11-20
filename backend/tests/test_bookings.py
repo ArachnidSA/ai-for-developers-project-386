@@ -102,6 +102,22 @@ def test_create_booking_returns_created_record(client: TestClient) -> None:
     assert datetime.fromisoformat(payload["end"]) == owner_time(day, 11, 0)
 
 
+def test_create_booking_omits_unspecified_optional_fields(client: TestClient) -> None:
+    """Незаполненные email и заметка не попадают в JSON (`null` не отдаём).
+
+    Контракт объявляет их необязательными (`guest_email?`, `note?`) — ответ должен
+    совпадать с этим представлением, иначе сгенерированный SDK ждёт `string | undefined`.
+    """
+    event_type_id = create_event_type(client, duration_minutes=30)
+
+    response = book(client, event_type_id, owner_time(owner_today(), 10, 0), guest_name="Анна")
+
+    assert response.status_code == 201
+    payload = response.json()
+    assert "guest_email" not in payload
+    assert "note" not in payload
+
+
 def test_creating_overlapping_booking_is_conflict(
     client: TestClient,
     session_factory: sessionmaker[Session],
