@@ -54,6 +54,50 @@
           }
         }
       }
+    },
+    "/api/event-types/{event_type_id}/slots": {
+      "get": {
+        "operationId": "CalendarApi_listEventTypeSlots",
+        "description": "Свободные слоты типа события на календарный день в поясе владельца.\nСлоты идут встык с шагом, равным длительности типа, и не выходят за рабочие часы 09:00–21:00.\nНеизвестный или архивный тип — 404; дата вне окна записи (14 дней от «сегодня») — 400.",
+        "parameters": [
+          {
+            "name": "event_type_id",
+            "in": "path",
+            "required": true,
+            "description": "Идентификатор типа события.",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "date",
+            "in": "query",
+            "required": true,
+            "description": "Календарный день в поясе владельца (YYYY-MM-DD).",
+            "schema": {
+              "type": "string",
+              "format": "date"
+            },
+            "explode": false
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The request has succeeded.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Slot"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
@@ -132,6 +176,26 @@
           "archived"
         ],
         "description": "Статус типа события: действующий или архивный."
+      },
+      "Slot": {
+        "type": "object",
+        "required": [
+          "start",
+          "end"
+        ],
+        "properties": {
+          "start": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Начало слота в UTC (ISO 8601)."
+          },
+          "end": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Конец слота в UTC (ISO 8601)."
+          }
+        },
+        "description": "Свободный слот: полуинтервал `[start, end)` времени в UTC."
       }
     }
   },

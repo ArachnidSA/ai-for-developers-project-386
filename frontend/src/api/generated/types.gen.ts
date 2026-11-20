@@ -53,6 +53,20 @@ export type EventTypeCreate = {
  */
 export type EventTypeStatus = 'active' | 'archived';
 
+/**
+ * Свободный слот: полуинтервал `[start, end)` времени в UTC.
+ */
+export type Slot = {
+    /**
+     * Начало слота в UTC (ISO 8601).
+     */
+    start: string;
+    /**
+     * Конец слота в UTC (ISO 8601).
+     */
+    end: string;
+};
+
 export type CalendarApiListEventTypesData = {
     body?: never;
     path?: never;
@@ -84,3 +98,29 @@ export type CalendarApiCreateEventTypeResponses = {
 };
 
 export type CalendarApiCreateEventTypeResponse = CalendarApiCreateEventTypeResponses[keyof CalendarApiCreateEventTypeResponses];
+
+export type CalendarApiListEventTypeSlotsData = {
+    body?: never;
+    path: {
+        /**
+         * Идентификатор типа события.
+         */
+        event_type_id: number;
+    };
+    query: {
+        /**
+         * Календарный день в поясе владельца (YYYY-MM-DD).
+         */
+        date: string;
+    };
+    url: '/api/event-types/{event_type_id}/slots';
+};
+
+export type CalendarApiListEventTypeSlotsResponses = {
+    /**
+     * The request has succeeded.
+     */
+    200: Array<Slot>;
+};
+
+export type CalendarApiListEventTypeSlotsResponse = CalendarApiListEventTypeSlotsResponses[keyof CalendarApiListEventTypeSlotsResponses];
