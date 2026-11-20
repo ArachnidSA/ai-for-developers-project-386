@@ -31,14 +31,19 @@ OpenCode в таком случае нужен предрегистрирова�
         "type": "remote",
         "url": "https://mcp.render.com/mcp",
         "oauth": false,
+        "protocol": "auto",
         "headers": {
-          "Authorization": "Bearer {file:~/.config/opencode/render-api-key}"
+          "Authorization": "Bearer {file:./render-api-key}"
         }
       }
     }
   }
 }
 ```
+
+> `protocol: "auto"` нужен потому, что сервер Render отвечает по более новой ревизии MCP:
+> с классическим `initialize` соединение рвётся (`ECONNRESET`), а `auto` сначала пробует
+> `server/discover` и только потом откатывается на legacy.
 
 ### Как получить ключ
 

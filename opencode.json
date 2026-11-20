@@ -6,6 +6,7 @@
         "type": "remote",
         "url": "https://mcp.render.com/mcp",
         "oauth": false,
+        "protocol": "auto",
         "headers": {
           "Authorization": "Bearer {file:./render-api-key}"
         }
