@@ -6,6 +6,7 @@ import uvicorn
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+from app.core.api import API_PREFIX
 from app.core.config import settings
 from app.core.database import init_db
 from app.core.spa import register_spa
@@ -34,10 +35,10 @@ def create_app(*, static_dir: Path | None = None) -> FastAPI:
         allow_headers=["*"],
     )
 
-    app.include_router(health.router, prefix="/api", tags=["health"])
-    app.include_router(event_types.router, prefix="/api", tags=["event-types"])
-    app.include_router(slots.router, prefix="/api", tags=["slots"])
-    app.include_router(bookings.router, prefix="/api", tags=["bookings"])
+    app.include_router(health.router, prefix=API_PREFIX, tags=["health"])
+    app.include_router(event_types.router, prefix=API_PREFIX, tags=["event-types"])
+    app.include_router(slots.router, prefix=API_PREFIX, tags=["slots"])
+    app.include_router(bookings.router, prefix=API_PREFIX, tags=["bookings"])
 
     # Статика монтируется после роутеров API, поэтому `/api/*` она не перехватывает.
     register_spa(app, static_dir if static_dir is not None else settings.frontend_dist_dir)
