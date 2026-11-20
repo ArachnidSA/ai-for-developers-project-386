@@ -43,6 +43,18 @@ model EventTypeCreate {
   duration_minutes: int32;
 }
 
+/** Данные для изменения типа события: переданные поля обновляются, остальные не трогаются. */
+model EventTypeUpdate {
+  /** Название типа события. */
+  name?: string;
+  /** Описание типа события. */
+  description?: string;
+  /** Длительность встречи в минутах (5–720). Не двигает уже сделанные записи. */
+  @minValue(5)
+  @maxValue(720)
+  duration_minutes?: int32;
+}
+
 /** Свободный слот: полуинтервал `[start, end)` времени в UTC. */
 model Slot {
   /** Начало слота в UTC (ISO 8601). */
@@ -115,10 +127,16 @@ model ApiError {
 
 @route("/api")
 namespace CalendarApi {
-  /** Список типов событий. Гостю — только действующие, владельцу — все. */
+  /**
+   * Список типов событий. По умолчанию — только действующие (гостевой список);
+   * с `include_archived=true` владелец видит и архивные типы.
+   */
   @route("/event-types")
   @get
-  op listEventTypes(): EventType[];
+  op listEventTypes(
+    /** Включать архивные типы (для владельца). */
+    @query include_archived?: boolean = false,
+  ): EventType[];
 
   /** Создать тип события. */
   @route("/event-types")
@@ -126,6 +144,54 @@ namespace CalendarApi {
   op createEventType(@body body: EventTypeCreate): {
     @statusCode statusCode: 201;
     @body body: EventType;
+  };
+
+  /** Изменить тип события. Переданные поля обновляются, остальные не трогаются. */
+  @route("/event-types/{event_type_id}")
+  @patch
+  op updateEventType(
+    /** Идентификатор типа события. */
+    @path event_type_id: int32,
+    @body body: EventTypeUpdate,
+  ): {
+    @statusCode statusCode: 200;
+    @body body: EventType;
+  } | {
+    @statusCode statusCode: 404;
+    @body body: ApiError;
+  };
+
+  /**
+   * Удалить тип события без записей. Если по типу уже есть записи — 409,
+   * историю не теряем, вместо удаления предлагается архивация.
+   */
+  @route("/event-types/{event_type_id}")
+  @delete
+  op deleteEventType(
+    /** Идентификатор типа события. */
+    @path event_type_id: int32,
+  ): {
+    @statusCode statusCode: 204;
+  } | {
+    @statusCode statusCode: 404;
+    @body body: ApiError;
+  } | {
+    @statusCode statusCode: 409;
+    @body body: ApiError;
+  };
+
+  /** Архивировать тип события: скрывается от гостей, записи по нему сохраняются. */
+  @route("/event-types/{event_type_id}/archive")
+  @post
+  op archiveEventType(
+    /** Идентификатор типа события. */
+    @path event_type_id: int32,
+  ): {
+    @statusCode statusCode: 200;
+    @body body: EventType;
+  } | {
+    @statusCode statusCode: 404;
+    @body body: ApiError;
   };
 
   /**

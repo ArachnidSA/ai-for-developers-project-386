@@ -14,6 +14,10 @@ import { OwnerPage } from './OwnerPage'
 vi.mock('@/api/eventTypes', () => ({
   listEventTypes: vi.fn(),
   createEventType: vi.fn(),
+  updateEventType: vi.fn(),
+  deleteEventType: vi.fn(),
+  archiveEventType: vi.fn(),
+  EventTypeInUseError: class EventTypeInUseError extends Error {},
 }))
 
 // Секция предстоящих записей ходит в API через обёртку — в тестах маршрута её подменяем.

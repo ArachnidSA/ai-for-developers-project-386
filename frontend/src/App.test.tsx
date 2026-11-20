@@ -9,6 +9,10 @@ import { AppRoutes } from './App'
 vi.mock('@/api/eventTypes', () => ({
   listEventTypes: vi.fn().mockResolvedValue([]),
   createEventType: vi.fn(),
+  updateEventType: vi.fn(),
+  deleteEventType: vi.fn(),
+  archiveEventType: vi.fn(),
+  EventTypeInUseError: class EventTypeInUseError extends Error {},
 }))
 
 vi.mock('@/api/bookings', () => ({
