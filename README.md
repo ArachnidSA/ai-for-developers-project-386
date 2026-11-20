@@ -13,6 +13,8 @@
 backend/           FastAPI-приложение (uv-проект)
 frontend/          React + Vite + TypeScript
 contract/          TypeSpec-контракт API (источник истины) и генерация SDK
+version.txt        текущая версия пакета (обновляет release-please)
+release-please-config.json  настройки релизов (release-please)
 mise.toml          инструменты, задачи, демоны, хуки
 hk.pkl             git-хуки (проверки перед коммитом)
 .github/           CI (hexlet-check, ci, opencode)
@@ -99,3 +101,12 @@ OpenCode видит скилы из `.agents/skills/` автоматически
 (браузерный сценарий). Перед проверками CI ставит браузер:
 `npx playwright install --with-deps chromium`.
 `.github/workflows/hexlet-check.yml` — проверки курса Hexlet (не редактируется).
+
+## Релизы
+
+Релизы ведёт [release-please](https://github.com/googleapis/release-please) по
+Conventional Commits. При push в `main` воркфлоу `.github/workflows/release-please.yml`
+открывает или обновляет release-PR: он подставляет следующую версию в `version.txt` и
+добавляет запись в `CHANGELOG.md`. Слияние этого PR создаёт git-тег и GitHub Release.
+Настройки — манифестные, в корне: `release-please-config.json` (тип `simple`, секции
+changelog) и `.release-please-manifest.json` (текущая версия пакета `.`).
