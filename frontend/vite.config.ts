@@ -28,5 +28,8 @@ export default defineConfig({
     environment: 'jsdom',
     // Без глобалов vitest RTL не включает авто-cleanup — чистим DOM между тестами вручную.
     setupFiles: ['./src/test/setup.ts'],
+    // Vitest запускает только юнит-тесты из src; Playwright-спеки живут в e2e/
+    // и запускаются через `mise run e2e`.
+    include: ['src/**/*.{test,spec}.{ts,tsx}'],
   },
 })
