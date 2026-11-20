@@ -11,6 +11,14 @@ class EventTypeCreate(BaseModel):
     duration_minutes: int = Field(ge=5, le=720)
 
 
+class EventTypeUpdate(BaseModel):
+    """Данные для изменения типа события: переданные поля обновляются, остальные не трогаются."""
+
+    name: str | None = None
+    description: str | None = None
+    duration_minutes: int | None = Field(default=None, ge=5, le=720)
+
+
 class EventTypeRead(BaseModel):
     """Тип события в ответе API."""
 

@@ -2,7 +2,7 @@
 
 import type { Client, ClientMeta, Options as Options2, RequestResult, TDataShape } from './client';
 import { client } from './client.gen';
-import type { CalendarApiCreateBookingData, CalendarApiCreateBookingErrors, CalendarApiCreateBookingResponses, CalendarApiCreateEventTypeData, CalendarApiCreateEventTypeResponses, CalendarApiListEventTypesData, CalendarApiListEventTypeSlotsData, CalendarApiListEventTypeSlotsResponses, CalendarApiListEventTypesResponses } from './types.gen';
+import type { CalendarApiArchiveEventTypeData, CalendarApiArchiveEventTypeErrors, CalendarApiArchiveEventTypeResponses, CalendarApiCreateBookingData, CalendarApiCreateBookingErrors, CalendarApiCreateBookingResponses, CalendarApiCreateEventTypeData, CalendarApiCreateEventTypeResponses, CalendarApiDeleteBookingData, CalendarApiDeleteBookingErrors, CalendarApiDeleteBookingResponses, CalendarApiDeleteEventTypeData, CalendarApiDeleteEventTypeErrors, CalendarApiDeleteEventTypeResponses, CalendarApiListEventTypesData, CalendarApiListEventTypeSlotsData, CalendarApiListEventTypeSlotsResponses, CalendarApiListEventTypesResponses, CalendarApiListUpcomingBookingsData, CalendarApiListUpcomingBookingsResponses, CalendarApiUpdateEventTypeData, CalendarApiUpdateEventTypeErrors, CalendarApiUpdateEventTypeResponses } from './types.gen';
 
 export type Options<TData extends TDataShape = TDataShape, ThrowOnError extends boolean = boolean, TResponse = unknown> = Options2<TData, ThrowOnError, TResponse> & {
     /**
@@ -19,6 +19,12 @@ export type Options<TData extends TDataShape = TDataShape, ThrowOnError extends 
 };
 
 /**
+ * Предстоящие записи всех типов (в том числе архивных) для владельца.
+ * Прошедшие записи не попадают в список; порядок — по возрастанию начала.
+ */
+export const calendarApiListUpcomingBookings = <ThrowOnError extends boolean = false>(options?: Options<CalendarApiListUpcomingBookingsData, ThrowOnError>): RequestResult<CalendarApiListUpcomingBookingsResponses, unknown, ThrowOnError> => (options?.client ?? client).get<CalendarApiListUpcomingBookingsResponses, unknown, ThrowOnError>({ url: '/api/bookings', ...options });
+
+/**
  * Создать запись гостем. `end` вычисляется сервером как `start + duration_minutes` типа.
  * Неизвестный или архивный тип — 404; время вне рабочих часов или окна записи — 400;
  * пересечение с любой существующей записью (в т.ч. другого типа) — 409.
@@ -33,7 +39,13 @@ export const calendarApiCreateBooking = <ThrowOnError extends boolean = false>(o
 });
 
 /**
- * Список типов событий. Гостю — только действующие, владельцу — все.
+ * Удалить запись, освободив её слот. Несуществующая запись — 404.
+ */
+export const calendarApiDeleteBooking = <ThrowOnError extends boolean = false>(options: Options<CalendarApiDeleteBookingData, ThrowOnError>): RequestResult<CalendarApiDeleteBookingResponses, CalendarApiDeleteBookingErrors, ThrowOnError> => (options.client ?? client).delete<CalendarApiDeleteBookingResponses, CalendarApiDeleteBookingErrors, ThrowOnError>({ url: '/api/bookings/{id}', ...options });
+
+/**
+ * Список типов событий. По умолчанию — только действующие (гостевой список);
+ * с `include_archived=true` владелец видит и архивные типы.
  */
 export const calendarApiListEventTypes = <ThrowOnError extends boolean = false>(options?: Options<CalendarApiListEventTypesData, ThrowOnError>): RequestResult<CalendarApiListEventTypesResponses, unknown, ThrowOnError> => (options?.client ?? client).get<CalendarApiListEventTypesResponses, unknown, ThrowOnError>({ url: '/api/event-types', ...options });
 
@@ -48,6 +60,29 @@ export const calendarApiCreateEventType = <ThrowOnError extends boolean = false>
         ...options.headers
     }
 });
+
+/**
+ * Удалить тип события без записей. Если по типу уже есть записи — 409,
+ * историю не теряем, вместо удаления предлагается архивация.
+ */
+export const calendarApiDeleteEventType = <ThrowOnError extends boolean = false>(options: Options<CalendarApiDeleteEventTypeData, ThrowOnError>): RequestResult<CalendarApiDeleteEventTypeResponses, CalendarApiDeleteEventTypeErrors, ThrowOnError> => (options.client ?? client).delete<CalendarApiDeleteEventTypeResponses, CalendarApiDeleteEventTypeErrors, ThrowOnError>({ url: '/api/event-types/{event_type_id}', ...options });
+
+/**
+ * Изменить тип события. Переданные поля обновляются, остальные не трогаются.
+ */
+export const calendarApiUpdateEventType = <ThrowOnError extends boolean = false>(options: Options<CalendarApiUpdateEventTypeData, ThrowOnError>): RequestResult<CalendarApiUpdateEventTypeResponses, CalendarApiUpdateEventTypeErrors, ThrowOnError> => (options.client ?? client).patch<CalendarApiUpdateEventTypeResponses, CalendarApiUpdateEventTypeErrors, ThrowOnError>({
+    url: '/api/event-types/{event_type_id}',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * Архивировать тип события: скрывается от гостей, записи по нему сохраняются.
+ */
+export const calendarApiArchiveEventType = <ThrowOnError extends boolean = false>(options: Options<CalendarApiArchiveEventTypeData, ThrowOnError>): RequestResult<CalendarApiArchiveEventTypeResponses, CalendarApiArchiveEventTypeErrors, ThrowOnError> => (options.client ?? client).post<CalendarApiArchiveEventTypeResponses, CalendarApiArchiveEventTypeErrors, ThrowOnError>({ url: '/api/event-types/{event_type_id}/archive', ...options });
 
 /**
  * Свободные слоты типа события на календарный день в поясе владельца.

@@ -36,3 +36,9 @@ class BookingRead(BaseModel):
     def _to_utc(cls, value: datetime) -> datetime:
         """В БД время хранится как naive-UTC; в ответе приводим к aware-UTC."""
         return as_utc(value)
+
+
+class UpcomingBookingRead(BookingRead):
+    """Предстоящая запись в списке владельца: та же запись плюс название типа."""
+
+    event_type_name: str

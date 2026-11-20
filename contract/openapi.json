@@ -43,13 +43,78 @@
             }
           }
         }
+      },
+      "get": {
+        "operationId": "CalendarApi_listUpcomingBookings",
+        "description": "Предстоящие записи всех типов (в том числе архивных) для владельца.\nПрошедшие записи не попадают в список; порядок — по возрастанию начала.",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "The request has succeeded.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/UpcomingBooking"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/bookings/{id}": {
+      "delete": {
+        "operationId": "CalendarApi_deleteBooking",
+        "description": "Удалить запись, освободив её слот. Несуществующая запись — 404.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "Идентификатор записи.",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "There is no content to send for this request, but the headers may be useful. "
+          },
+          "404": {
+            "description": "The server cannot find the requested resource.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
       }
     },
     "/api/event-types": {
       "get": {
         "operationId": "CalendarApi_listEventTypes",
-        "description": "Список типов событий. Гостю — только действующие, владельцу — все.",
-        "parameters": [],
+        "description": "Список типов событий. По умолчанию — только действующие (гостевой список);\nс `include_archived=true` владелец видит и архивные типы.",
+        "parameters": [
+          {
+            "name": "include_archived",
+            "in": "query",
+            "required": false,
+            "description": "Включать архивные типы (для владельца).",
+            "schema": {
+              "type": "boolean",
+              "default": false
+            },
+            "explode": false
+          }
+        ],
         "responses": {
           "200": {
             "description": "The request has succeeded.",
@@ -88,6 +153,137 @@
             "application/json": {
               "schema": {
                 "$ref": "#/components/schemas/EventTypeCreate"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/event-types/{event_type_id}": {
+      "patch": {
+        "operationId": "CalendarApi_updateEventType",
+        "description": "Изменить тип события. Переданные поля обновляются, остальные не трогаются.",
+        "parameters": [
+          {
+            "name": "event_type_id",
+            "in": "path",
+            "required": true,
+            "description": "Идентификатор типа события.",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The request has succeeded.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EventType"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "The server cannot find the requested resource.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EventTypeUpdate"
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "operationId": "CalendarApi_deleteEventType",
+        "description": "Удалить тип события без записей. Если по типу уже есть записи — 409,\nисторию не теряем, вместо удаления предлагается архивация.",
+        "parameters": [
+          {
+            "name": "event_type_id",
+            "in": "path",
+            "required": true,
+            "description": "Идентификатор типа события.",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "There is no content to send for this request, but the headers may be useful. "
+          },
+          "404": {
+            "description": "The server cannot find the requested resource.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "The request conflicts with the current state of the server.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/event-types/{event_type_id}/archive": {
+      "post": {
+        "operationId": "CalendarApi_archiveEventType",
+        "description": "Архивировать тип события: скрывается от гостей, записи по нему сохраняются.",
+        "parameters": [
+          {
+            "name": "event_type_id",
+            "in": "path",
+            "required": true,
+            "description": "Идентификатор типа события.",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The request has succeeded.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EventType"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "The server cannot find the requested resource.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
               }
             }
           }
@@ -311,6 +507,27 @@
         ],
         "description": "Статус типа события: действующий или архивный."
       },
+      "EventTypeUpdate": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Название типа события."
+          },
+          "description": {
+            "type": "string",
+            "description": "Описание типа события."
+          },
+          "duration_minutes": {
+            "type": "integer",
+            "format": "int32",
+            "minimum": 5,
+            "maximum": 720,
+            "description": "Длительность встречи в минутах (5–720). Не двигает уже сделанные записи."
+          }
+        },
+        "description": "Данные для изменения типа события: переданные поля обновляются, остальные не трогаются."
+      },
       "Slot": {
         "type": "object",
         "required": [
@@ -330,6 +547,56 @@
           }
         },
         "description": "Свободный слот: полуинтервал `[start, end)` времени в UTC."
+      },
+      "UpcomingBooking": {
+        "type": "object",
+        "required": [
+          "id",
+          "event_type_id",
+          "event_type_name",
+          "guest_name",
+          "start",
+          "end"
+        ],
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int32",
+            "description": "Системный идентификатор."
+          },
+          "event_type_id": {
+            "type": "integer",
+            "format": "int32",
+            "description": "Тип события, на который записался гость."
+          },
+          "event_type_name": {
+            "type": "string",
+            "description": "Название типа события."
+          },
+          "guest_name": {
+            "type": "string",
+            "description": "Имя гостя."
+          },
+          "guest_email": {
+            "type": "string",
+            "description": "Email гостя."
+          },
+          "note": {
+            "type": "string",
+            "description": "Заметка гостя."
+          },
+          "start": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Начало встречи в UTC (ISO 8601)."
+          },
+          "end": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Конец встречи в UTC (ISO 8601)."
+          }
+        },
+        "description": "Предстоящая запись в списке владельца: время, тип, имя, email и заметка гостя."
       }
     }
   },
