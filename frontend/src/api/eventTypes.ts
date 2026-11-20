@@ -1,11 +1,11 @@
 import { client } from '@/api/client'
+import { detailOf } from '@/api/errors'
 import {
   calendarApiArchiveEventType,
   calendarApiCreateEventType,
   calendarApiDeleteEventType,
   calendarApiListEventTypes,
   calendarApiUpdateEventType,
-  type ApiError,
   type EventType,
   type EventTypeCreate,
   type EventTypeUpdate,
@@ -19,10 +19,6 @@ export class EventTypeInUseError extends Error {
     super(message)
     this.name = 'EventTypeInUseError'
   }
-}
-
-function detailOf(error: ApiError | undefined, fallback: string): string {
-  return error?.detail ?? fallback
 }
 
 /**

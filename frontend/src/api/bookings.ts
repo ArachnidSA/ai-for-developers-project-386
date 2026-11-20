@@ -1,9 +1,9 @@
 import { client } from '@/api/client'
+import { detailOf } from '@/api/errors'
 import {
   calendarApiCreateBooking,
   calendarApiDeleteBooking,
   calendarApiListUpcomingBookings,
-  type ApiError,
   type Booking,
   type BookingCreate,
   type UpcomingBooking,
@@ -17,10 +17,6 @@ export class BookingConflictError extends Error {
     super(message)
     this.name = 'BookingConflictError'
   }
-}
-
-function detailOf(error: ApiError | undefined, fallback: string): string {
-  return error?.detail ?? fallback
 }
 
 /** Создать запись гостем через сгенерированный SDK. */
