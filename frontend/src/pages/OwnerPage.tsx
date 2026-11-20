@@ -2,6 +2,7 @@ import { type FormEvent, useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 
 import { createEventType, listEventTypes, type EventType } from '@/api/eventTypes'
+import { UpcomingBookings } from '@/components/UpcomingBookings'
 import { Button } from '@/components/ui/button'
 
 function OwnerPage() {
@@ -56,6 +57,8 @@ function OwnerPage() {
           </ul>
         )}
       </section>
+
+      <UpcomingBookings />
 
       <form className="flex flex-col gap-3" onSubmit={handleSubmit}>
         <h2 className="text-xl font-semibold">Новый тип события</h2>
