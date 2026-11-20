@@ -30,6 +30,6 @@ def get_session() -> Iterator[Session]:
 def init_db() -> None:
     """Создаёт таблицы, если их ещё нет."""
     # Импорт регистрирует модели в metadata Base.
-    from app.models import event_type  # noqa: F401
+    from app.models import booking, event_type  # noqa: F401
 
     Base.metadata.create_all(bind=engine)
