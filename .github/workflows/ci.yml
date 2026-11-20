@@ -18,3 +18,8 @@ jobs:
 
       - name: Run checks
         run: mise run check
+
+      # Перегенерировать артефакты из контракта и убедиться, что дерево не изменилось:
+      # падает, если сгенерированные файлы разошлись с закоммиченными.
+      - name: Check contract codegen drift
+        run: mise run contract

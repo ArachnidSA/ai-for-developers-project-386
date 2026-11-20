@@ -56,6 +56,26 @@ cd backend  && uv run pytest tests/test_health.py::test_healthcheck
 cd frontend && npm run test -- src/App.test.tsx
 ```
 
+## Кодогенерация контракта
+
+Источник истины для HTTP-контракта — **TypeSpec**: `contract/main.tsp` (плюс конфиг
+`contract/tspconfig.yaml`). Всё остальное генерируется одной командой:
+
+```sh
+mise run gen
+```
+
+- **Генерируемые пути** (их не правят руками): `contract/openapi.json` и
+  `frontend/src/api/generated/`.
+- `contract/openapi.json` и `frontend/src/api/generated/**` **коммитятся**, потому что
+  `mise run check` не должен требовать сети и генерации. Любая ручная правка этих файлов
+  затирается при следующем `mise run gen` — меняй `contract/main.tsp`, перегенерируй и
+  закоммить сгенерированное вместе с правкой контракта.
+- `mise run contract` = `mise run gen` + проверка, что сгенерированные файлы не разошлись
+  с закоммиченными; при дрейфе задача падает. Ту же проверку выполняет CI
+  (`.github/workflows/ci.yml`), а композитная задача `check` будет её переиспользовать.
+- Подробности о генераторах и зафиксированных версиях — в `contract/README.md`.
+
 ## Особенности инструментов
 
 - Линтер фронтенда — **oxlint** (`.oxlintrc.json`), а не ESLint; проверка типов — `tsc -b`

@@ -34,6 +34,7 @@ mise daemons status   # состояние сервисов
 |---|---|
 | `mise run install` | `uv sync` (бэкенд) + `npm ci` (фронт) |
 | `mise run gen` | сгенерировать OpenAPI и клиентский SDK из TypeSpec (`contract/`) |
+| `mise run contract` | `gen` + проверка, что сгенерированные артефакты не разошлись с закоммиченными |
 | `mise run lint` | `ruff` (бэкенд) и `oxlint` (фронт) |
 | `mise run typecheck` | `mypy` (Python) и `tsc` (TypeScript) |
 | `mise run test` | дымовые тесты: `pytest` (бэкенд) и `vitest` (фронт) |
