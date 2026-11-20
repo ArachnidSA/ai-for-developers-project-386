@@ -25,8 +25,8 @@ const IMAGE = process.env.DOCKER_IMAGE ?? "calendar-app:local";
 const CONTAINER = `calendar-smoke-${process.pid}`;
 // Пояс владельца: окно записи (14 дней от «сегодня») строится в нём — как в BookPage.
 const OWNER_TIME_ZONE = "Asia/Yekaterinburg";
-// День по индексу 1 (завтра по поясу владельца) всегда в окне записи и не пуст.
-const DAY_INDEX = 1;
+// Сдвиг на 1 день (завтра по поясу владельца) всегда попадает в окно записи и не пуст.
+const DAY_OFFSET = 1;
 
 const delay = (ms) => new Promise((done) => setTimeout(done, ms));
 
@@ -89,6 +89,15 @@ async function requestJson(base, path, options) {
   return { ...response, body };
 }
 
+/** POST JSON-тела и разбор ответа — общий путь для запросов сценария. */
+async function postJson(base, path, payload) {
+  return requestJson(base, path, {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+}
+
 /** Ждём, пока приложение в контейнере начнёт отвечать на healthcheck. */
 async function waitForHealth(base) {
   const deadline = Date.now() + 90_000;
@@ -135,30 +144,26 @@ async function checkSpa(base) {
 async function checkGuestAndOwner(base) {
   console.log("Сценарий гостя и владельца:");
   const name = `Созвон ${Date.now()}`;
-  const created = await requestJson(base, "/api/event-types", {
-    method: "POST",
-    headers: { "content-type": "application/json" },
-    body: JSON.stringify({ name, description: "Созвон для проверки", duration_minutes: 30 }),
+  const created = await postJson(base, "/api/event-types", {
+    name,
+    description: "Созвон для проверки",
+    duration_minutes: 30,
   });
   check(created.status === 201, "владелец заводит тип события (201)");
   const eventTypeId = created.body?.id;
   check(Number.isInteger(eventTypeId), "тип события получил идентификатор");
 
-  const day = ownerDay(DAY_INDEX);
+  const day = ownerDay(DAY_OFFSET);
   const slots = await requestJson(base, `/api/event-types/${eventTypeId}/slots?date=${day}`);
   check(slots.status === 200, `слоты на ${day} отдаются (200)`);
   check(Array.isArray(slots.body) && slots.body.length > 0, "в дне есть свободные слоты");
 
   const start = slots.body[0].start;
-  const booked = await requestJson(base, "/api/bookings", {
-    method: "POST",
-    headers: { "content-type": "application/json" },
-    body: JSON.stringify({
-      event_type_id: eventTypeId,
-      start,
-      guest_name: "Гость Тестовый",
-      guest_email: "guest@example.com",
-    }),
+  const booked = await postJson(base, "/api/bookings", {
+    event_type_id: eventTypeId,
+    start,
+    guest_name: "Гость Тестовый",
+    guest_email: "guest@example.com",
   });
   check(booked.status === 201, "гость записывается на свободный слот (201)");
 
@@ -170,10 +175,10 @@ async function checkGuestAndOwner(base) {
     "запись гостя видна в списке владельца",
   );
 
-  const conflict = await requestJson(base, "/api/bookings", {
-    method: "POST",
-    headers: { "content-type": "application/json" },
-    body: JSON.stringify({ event_type_id: eventTypeId, start, guest_name: "Второй гость" }),
+  const conflict = await postJson(base, "/api/bookings", {
+    event_type_id: eventTypeId,
+    start,
+    guest_name: "Второй гость",
   });
   check(conflict.status === 409, "повтор на занятый слот отклоняется (409)");
 }
