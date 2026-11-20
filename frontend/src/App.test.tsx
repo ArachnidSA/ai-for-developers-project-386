@@ -11,6 +11,11 @@ vi.mock('@/api/eventTypes', () => ({
   createEventType: vi.fn(),
 }))
 
+vi.mock('@/api/bookings', () => ({
+  listUpcomingBookings: vi.fn().mockResolvedValue([]),
+  deleteBooking: vi.fn(),
+}))
+
 function renderAt(path: string) {
   return render(
     <MemoryRouter initialEntries={[path]}>

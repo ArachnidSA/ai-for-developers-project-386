@@ -1,12 +1,15 @@
 import { client } from '@/api/client'
 import {
   calendarApiCreateBooking,
+  calendarApiDeleteBooking,
+  calendarApiListUpcomingBookings,
   type ApiError,
   type Booking,
   type BookingCreate,
+  type UpcomingBooking,
 } from '@/api/generated'
 
-export type { Booking, BookingCreate }
+export type { Booking, BookingCreate, UpcomingBooking }
 
 /** Конфликт: выбранный слот уже занят (`409` по контракту). */
 export class BookingConflictError extends Error {
@@ -30,4 +33,18 @@ export async function createBooking(body: BookingCreate): Promise<Booking> {
     throw new Error(detailOf(error, 'Не удалось создать запись'))
   }
   return data
+}
+
+/** Предстоящие записи всех типов (в том числе архивных) через сгенерированный SDK. */
+export async function listUpcomingBookings(): Promise<UpcomingBooking[]> {
+  const { data } = await calendarApiListUpcomingBookings({ client })
+  return data ?? []
+}
+
+/** Удалить запись, освободив её слот, через сгенерированный SDK. */
+export async function deleteBooking(id: number): Promise<void> {
+  const { error, response } = await calendarApiDeleteBooking({ client, path: { id } })
+  if (response?.ok !== true) {
+    throw new Error(detailOf(error, 'Не удалось удалить запись'))
+  }
 }
