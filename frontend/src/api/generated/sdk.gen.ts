@@ -2,7 +2,7 @@
 
 import type { Client, ClientMeta, Options as Options2, RequestResult, TDataShape } from './client';
 import { client } from './client.gen';
-import type { CalendarApiCreateEventTypeData, CalendarApiCreateEventTypeResponses, CalendarApiListEventTypesData, CalendarApiListEventTypeSlotsData, CalendarApiListEventTypeSlotsResponses, CalendarApiListEventTypesResponses } from './types.gen';
+import type { CalendarApiCreateBookingData, CalendarApiCreateBookingErrors, CalendarApiCreateBookingResponses, CalendarApiCreateEventTypeData, CalendarApiCreateEventTypeResponses, CalendarApiListEventTypesData, CalendarApiListEventTypeSlotsData, CalendarApiListEventTypeSlotsResponses, CalendarApiListEventTypesResponses } from './types.gen';
 
 export type Options<TData extends TDataShape = TDataShape, ThrowOnError extends boolean = boolean, TResponse = unknown> = Options2<TData, ThrowOnError, TResponse> & {
     /**
@@ -17,6 +17,20 @@ export type Options<TData extends TDataShape = TDataShape, ThrowOnError extends 
      */
     meta?: keyof ClientMeta extends never ? Record<string, unknown> : ClientMeta;
 };
+
+/**
+ * Создать запись гостем. `end` вычисляется сервером как `start + duration_minutes` типа.
+ * Неизвестный или архивный тип — 404; время вне рабочих часов или окна записи — 400;
+ * пересечение с любой существующей записью (в т.ч. другого типа) — 409.
+ */
+export const calendarApiCreateBooking = <ThrowOnError extends boolean = false>(options: Options<CalendarApiCreateBookingData, ThrowOnError>): RequestResult<CalendarApiCreateBookingResponses, CalendarApiCreateBookingErrors, ThrowOnError> => (options.client ?? client).post<CalendarApiCreateBookingResponses, CalendarApiCreateBookingErrors, ThrowOnError>({
+    url: '/api/bookings',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
 
 /**
  * Список типов событий. Гостю — только действующие, владельцу — все.

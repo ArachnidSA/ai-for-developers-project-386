@@ -51,6 +51,48 @@ model Slot {
   end: utcDateTime;
 }
 
+/** Запись гостя на выбранный слот. */
+model Booking {
+  /** Системный идентификатор. */
+  id: int32;
+  /** Тип события, на который записался гость. */
+  event_type_id: int32;
+  /** Имя гостя. */
+  guest_name: string;
+  /** Email гостя. */
+  guest_email?: string;
+  /** Заметка гостя. */
+  note?: string;
+  /** Начало встречи в UTC (ISO 8601). */
+  start: utcDateTime;
+  /** Конец встречи в UTC (ISO 8601). Вычисляется сервером. */
+  end: utcDateTime;
+}
+
+/** Данные для создания записи гостем. */
+model BookingCreate {
+  /** Тип события, на который записывается гость. */
+  event_type_id: int32;
+  /** Начало встречи в UTC (ISO 8601); должно попадать в свободный слот. */
+  start: utcDateTime;
+  /** Имя гостя (1–100 символов, обязательно). */
+  @minLength(1)
+  @maxLength(100)
+  guest_name: string;
+  /** Email гостя (необязательно, проверяется формат). */
+  @format("email")
+  guest_email?: string;
+  /** Заметка гостя (необязательно, до 500 символов). */
+  @maxLength(500)
+  note?: string;
+}
+
+/** Тело ответа об ошибке. */
+model ApiError {
+  /** Понятное человеку описание ошибки. */
+  detail: string;
+}
+
 @route("/api")
 namespace CalendarApi {
   /** Список типов событий. Гостю — только действующие, владельцу — все. */
@@ -79,4 +121,19 @@ namespace CalendarApi {
     /** Календарный день в поясе владельца (YYYY-MM-DD). */
     @query date: plainDate,
   ): Slot[];
+
+  /**
+   * Создать запись гостем. `end` вычисляется сервером как `start + duration_minutes` типа.
+   * Неизвестный или архивный тип — 404; время вне рабочих часов или окна записи — 400;
+   * пересечение с любой существующей записью (в т.ч. другого типа) — 409.
+   */
+  @route("/bookings")
+  @post
+  op createBooking(@body body: BookingCreate): {
+    @statusCode statusCode: 201;
+    @body body: Booking;
+  } | {
+    @statusCode statusCode: 409;
+    @body body: ApiError;
+  };
 }

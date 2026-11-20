@@ -5,6 +5,76 @@ export type ClientOptions = {
 };
 
 /**
+ * Тело ответа об ошибке.
+ */
+export type ApiError = {
+    /**
+     * Понятное человеку описание ошибки.
+     */
+    detail: string;
+};
+
+/**
+ * Запись гостя на выбранный слот.
+ */
+export type Booking = {
+    /**
+     * Системный идентификатор.
+     */
+    id: number;
+    /**
+     * Тип события, на который записался гость.
+     */
+    event_type_id: number;
+    /**
+     * Имя гостя.
+     */
+    guest_name: string;
+    /**
+     * Email гостя.
+     */
+    guest_email?: string;
+    /**
+     * Заметка гостя.
+     */
+    note?: string;
+    /**
+     * Начало встречи в UTC (ISO 8601).
+     */
+    start: string;
+    /**
+     * Конец встречи в UTC (ISO 8601). Вычисляется сервером.
+     */
+    end: string;
+};
+
+/**
+ * Данные для создания записи гостем.
+ */
+export type BookingCreate = {
+    /**
+     * Тип события, на который записывается гость.
+     */
+    event_type_id: number;
+    /**
+     * Начало встречи в UTC (ISO 8601); должно попадать в свободный слот.
+     */
+    start: string;
+    /**
+     * Имя гостя (1–100 символов, обязательно).
+     */
+    guest_name: string;
+    /**
+     * Email гостя (необязательно, проверяется формат).
+     */
+    guest_email?: string;
+    /**
+     * Заметка гостя (необязательно, до 500 символов).
+     */
+    note?: string;
+};
+
+/**
  * Вид встречи, который заводит владелец.
  */
 export type EventType = {
@@ -66,6 +136,31 @@ export type Slot = {
      */
     end: string;
 };
+
+export type CalendarApiCreateBookingData = {
+    body: BookingCreate;
+    path?: never;
+    query?: never;
+    url: '/api/bookings';
+};
+
+export type CalendarApiCreateBookingErrors = {
+    /**
+     * The request conflicts with the current state of the server.
+     */
+    409: ApiError;
+};
+
+export type CalendarApiCreateBookingError = CalendarApiCreateBookingErrors[keyof CalendarApiCreateBookingErrors];
+
+export type CalendarApiCreateBookingResponses = {
+    /**
+     * The request has succeeded and a new resource has been created as a result.
+     */
+    201: Booking;
+};
+
+export type CalendarApiCreateBookingResponse = CalendarApiCreateBookingResponses[keyof CalendarApiCreateBookingResponses];
 
 export type CalendarApiListEventTypesData = {
     body?: never;
