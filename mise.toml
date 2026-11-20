@@ -67,6 +67,11 @@ run = "npm run test"
 description = "Дымовые тесты бэкенда и фронтенда"
 depends = ["test:backend", "test:frontend"]
 
+[tasks.e2e]
+description = "Браузерный E2E-сценарий гостя на настоящих серверах (Playwright)"
+dir = "frontend"
+run = "npm run e2e"
+
 [tasks.check]
 description = "Линтер, проверка типов и дымовые тесты"
 depends = ["lint", "typecheck", "test"]
