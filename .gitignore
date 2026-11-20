@@ -24,6 +24,11 @@ node_modules/
 build/
 dist/
 
+# SQLite (создаётся приложением при старте)
+*.db
+*.sqlite
+*.sqlite3
+
 # Test coverage
 .coverage
 coverage/

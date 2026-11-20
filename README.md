@@ -12,6 +12,7 @@
 ```
 backend/           FastAPI-приложение (uv-проект)
 frontend/          React + Vite + TypeScript
+contract/          TypeSpec-контракт API (источник истины) и генерация SDK
 mise.toml          инструменты, задачи, демоны, хуки
 hk.pkl             git-хуки (проверки перед коммитом)
 .github/           CI (hexlet-check, ci, opencode)
@@ -32,6 +33,7 @@ mise daemons status   # состояние сервисов
 | Команда | Что делает |
 |---|---|
 | `mise run install` | `uv sync` (бэкенд) + `npm ci` (фронт) |
+| `mise run gen` | сгенерировать OpenAPI и клиентский SDK из TypeSpec (`contract/`) |
 | `mise run lint` | `ruff` (бэкенд) и `oxlint` (фронт) |
 | `mise run typecheck` | `mypy` (Python) и `tsc` (TypeScript) |
 | `mise run test` | дымовые тесты: `pytest` (бэкенд) и `vitest` (фронт) |
@@ -40,7 +42,9 @@ mise daemons status   # состояние сервисов
 
 ## Разработка
 
-- Бэкенд: http://127.0.0.1:8000 (Swagger на `/docs`), роут `GET /api/healthcheck`.
+- Бэкенд: http://127.0.0.1:8000 (Swagger на `/docs`), роуты `GET /api/healthcheck` и
+  `GET`/`POST /api/event-types`. Контракт — TypeSpec в `contract/`, клиентский SDK
+  генерируется командой `mise run gen` (см. `contract/README.md`).
 - Фронтенд: http://127.0.0.1:5173; запросы к `/api/*` проксируются на бэкенд
   (`frontend/vite.config.ts`), поэтому CORS не нужен.
 
