@@ -2,7 +2,7 @@
 
 import type { Client, ClientMeta, Options as Options2, RequestResult, TDataShape } from './client';
 import { client } from './client.gen';
-import type { CalendarApiCreateBookingData, CalendarApiCreateBookingErrors, CalendarApiCreateBookingResponses, CalendarApiCreateEventTypeData, CalendarApiCreateEventTypeResponses, CalendarApiListEventTypesData, CalendarApiListEventTypeSlotsData, CalendarApiListEventTypeSlotsResponses, CalendarApiListEventTypesResponses } from './types.gen';
+import type { CalendarApiCreateBookingData, CalendarApiCreateBookingErrors, CalendarApiCreateBookingResponses, CalendarApiCreateEventTypeData, CalendarApiCreateEventTypeResponses, CalendarApiDeleteBookingData, CalendarApiDeleteBookingErrors, CalendarApiDeleteBookingResponses, CalendarApiListEventTypesData, CalendarApiListEventTypeSlotsData, CalendarApiListEventTypeSlotsResponses, CalendarApiListEventTypesResponses, CalendarApiListUpcomingBookingsData, CalendarApiListUpcomingBookingsResponses } from './types.gen';
 
 export type Options<TData extends TDataShape = TDataShape, ThrowOnError extends boolean = boolean, TResponse = unknown> = Options2<TData, ThrowOnError, TResponse> & {
     /**
@@ -19,6 +19,12 @@ export type Options<TData extends TDataShape = TDataShape, ThrowOnError extends 
 };
 
 /**
+ * Предстоящие записи всех типов (в том числе архивных) для владельца.
+ * Прошедшие записи не попадают в список; порядок — по возрастанию начала.
+ */
+export const calendarApiListUpcomingBookings = <ThrowOnError extends boolean = false>(options?: Options<CalendarApiListUpcomingBookingsData, ThrowOnError>): RequestResult<CalendarApiListUpcomingBookingsResponses, unknown, ThrowOnError> => (options?.client ?? client).get<CalendarApiListUpcomingBookingsResponses, unknown, ThrowOnError>({ url: '/api/bookings', ...options });
+
+/**
  * Создать запись гостем. `end` вычисляется сервером как `start + duration_minutes` типа.
  * Неизвестный или архивный тип — 404; время вне рабочих часов или окна записи — 400;
  * пересечение с любой существующей записью (в т.ч. другого типа) — 409.
@@ -31,6 +37,11 @@ export const calendarApiCreateBooking = <ThrowOnError extends boolean = false>(o
         ...options.headers
     }
 });
+
+/**
+ * Удалить запись, освободив её слот. Несуществующая запись — 404.
+ */
+export const calendarApiDeleteBooking = <ThrowOnError extends boolean = false>(options: Options<CalendarApiDeleteBookingData, ThrowOnError>): RequestResult<CalendarApiDeleteBookingResponses, CalendarApiDeleteBookingErrors, ThrowOnError> => (options.client ?? client).delete<CalendarApiDeleteBookingResponses, CalendarApiDeleteBookingErrors, ThrowOnError>({ url: '/api/bookings/{id}', ...options });
 
 /**
  * Список типов событий. Гостю — только действующие, владельцу — все.

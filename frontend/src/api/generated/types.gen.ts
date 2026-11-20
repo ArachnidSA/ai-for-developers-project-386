@@ -137,6 +137,60 @@ export type Slot = {
     end: string;
 };
 
+/**
+ * Предстоящая запись в списке владельца: время, тип, имя, email и заметка гостя.
+ */
+export type UpcomingBooking = {
+    /**
+     * Системный идентификатор.
+     */
+    id: number;
+    /**
+     * Тип события, на который записался гость.
+     */
+    event_type_id: number;
+    /**
+     * Название типа события.
+     */
+    event_type_name: string;
+    /**
+     * Имя гостя.
+     */
+    guest_name: string;
+    /**
+     * Email гостя.
+     */
+    guest_email?: string;
+    /**
+     * Заметка гостя.
+     */
+    note?: string;
+    /**
+     * Начало встречи в UTC (ISO 8601).
+     */
+    start: string;
+    /**
+     * Конец встречи в UTC (ISO 8601).
+     */
+    end: string;
+};
+
+export type CalendarApiListUpcomingBookingsData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/bookings';
+};
+
+export type CalendarApiListUpcomingBookingsResponses = {
+    /**
+     * The request has succeeded.
+     */
+    200: Array<UpcomingBooking>;
+};
+
+export type CalendarApiListUpcomingBookingsResponse = CalendarApiListUpcomingBookingsResponses[keyof CalendarApiListUpcomingBookingsResponses];
+
 export type CalendarApiCreateBookingData = {
     body: BookingCreate;
     path?: never;
@@ -161,6 +215,36 @@ export type CalendarApiCreateBookingResponses = {
 };
 
 export type CalendarApiCreateBookingResponse = CalendarApiCreateBookingResponses[keyof CalendarApiCreateBookingResponses];
+
+export type CalendarApiDeleteBookingData = {
+    body?: never;
+    path: {
+        /**
+         * Идентификатор записи.
+         */
+        id: number;
+    };
+    query?: never;
+    url: '/api/bookings/{id}';
+};
+
+export type CalendarApiDeleteBookingErrors = {
+    /**
+     * The server cannot find the requested resource.
+     */
+    404: ApiError;
+};
+
+export type CalendarApiDeleteBookingError = CalendarApiDeleteBookingErrors[keyof CalendarApiDeleteBookingErrors];
+
+export type CalendarApiDeleteBookingResponses = {
+    /**
+     * There is no content to send for this request, but the headers may be useful.
+     */
+    204: void;
+};
+
+export type CalendarApiDeleteBookingResponse = CalendarApiDeleteBookingResponses[keyof CalendarApiDeleteBookingResponses];
 
 export type CalendarApiListEventTypesData = {
     body?: never;

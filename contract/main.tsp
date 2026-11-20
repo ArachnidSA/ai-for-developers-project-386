@@ -87,6 +87,26 @@ model BookingCreate {
   note?: string;
 }
 
+/** Предстоящая запись в списке владельца: время, тип, имя, email и заметка гостя. */
+model UpcomingBooking {
+  /** Системный идентификатор. */
+  id: int32;
+  /** Тип события, на который записался гость. */
+  event_type_id: int32;
+  /** Название типа события. */
+  event_type_name: string;
+  /** Имя гостя. */
+  guest_name: string;
+  /** Email гостя. */
+  guest_email?: string;
+  /** Заметка гостя. */
+  note?: string;
+  /** Начало встречи в UTC (ISO 8601). */
+  start: utcDateTime;
+  /** Конец встречи в UTC (ISO 8601). */
+  end: utcDateTime;
+}
+
 /** Тело ответа об ошибке. */
 model ApiError {
   /** Понятное человеку описание ошибки. */
@@ -134,6 +154,29 @@ namespace CalendarApi {
     @body body: Booking;
   } | {
     @statusCode statusCode: 409;
+    @body body: ApiError;
+  };
+
+  /**
+   * Предстоящие записи всех типов (в том числе архивных) для владельца.
+   * Прошедшие записи не попадают в список; порядок — по возрастанию начала.
+   */
+  @route("/bookings")
+  @get
+  op listUpcomingBookings(): UpcomingBooking[];
+
+  /**
+   * Удалить запись, освободив её слот. Несуществующая запись — 404.
+   */
+  @route("/bookings/{id}")
+  @delete
+  op deleteBooking(
+    /** Идентификатор записи. */
+    @path id: int32,
+  ): {
+    @statusCode statusCode: 204;
+  } | {
+    @statusCode statusCode: 404;
     @body body: ApiError;
   };
 }

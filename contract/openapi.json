@@ -43,6 +43,59 @@
             }
           }
         }
+      },
+      "get": {
+        "operationId": "CalendarApi_listUpcomingBookings",
+        "description": "Предстоящие записи всех типов (в том числе архивных) для владельца.\nПрошедшие записи не попадают в список; порядок — по возрастанию начала.",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "The request has succeeded.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/UpcomingBooking"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/bookings/{id}": {
+      "delete": {
+        "operationId": "CalendarApi_deleteBooking",
+        "description": "Удалить запись, освободив её слот. Несуществующая запись — 404.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "Идентификатор записи.",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "There is no content to send for this request, but the headers may be useful. "
+          },
+          "404": {
+            "description": "The server cannot find the requested resource.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
       }
     },
     "/api/event-types": {
@@ -330,6 +383,56 @@
           }
         },
         "description": "Свободный слот: полуинтервал `[start, end)` времени в UTC."
+      },
+      "UpcomingBooking": {
+        "type": "object",
+        "required": [
+          "id",
+          "event_type_id",
+          "event_type_name",
+          "guest_name",
+          "start",
+          "end"
+        ],
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int32",
+            "description": "Системный идентификатор."
+          },
+          "event_type_id": {
+            "type": "integer",
+            "format": "int32",
+            "description": "Тип события, на который записался гость."
+          },
+          "event_type_name": {
+            "type": "string",
+            "description": "Название типа события."
+          },
+          "guest_name": {
+            "type": "string",
+            "description": "Имя гостя."
+          },
+          "guest_email": {
+            "type": "string",
+            "description": "Email гостя."
+          },
+          "note": {
+            "type": "string",
+            "description": "Заметка гостя."
+          },
+          "start": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Начало встречи в UTC (ISO 8601)."
+          },
+          "end": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Конец встречи в UTC (ISO 8601)."
+          }
+        },
+        "description": "Предстоящая запись в списке владельца: время, тип, имя, email и заметка гостя."
       }
     }
   },
