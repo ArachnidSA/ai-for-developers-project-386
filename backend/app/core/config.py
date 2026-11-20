@@ -1,3 +1,5 @@
+from pathlib import Path
+
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -15,6 +17,9 @@ class Settings(BaseSettings):
     database_url: str = "sqlite:///./calendar.db"
     # Origins, которым разрешены запросы к API (для CORS).
     cors_origins: list[str] = ["http://localhost:5173"]
+    # Каталог со статикой собранного SPA. В образе сюда кладётся `vite build`; если
+    # каталога нет, SPA не отдаётся — в dev статику обслуживает Vite.
+    frontend_dist_dir: Path = Path("static")
 
 
 settings = Settings()
