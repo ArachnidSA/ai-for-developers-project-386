@@ -12,6 +12,9 @@
 ```
 backend/           FastAPI-приложение (uv-проект)
 frontend/          React + Vite + TypeScript
+contract/          TypeSpec-контракт API (источник истины) и генерация SDK
+version.txt        текущая версия пакета (обновляет release-please)
+release-please-config.json  настройки релизов (release-please)
 mise.toml          инструменты, задачи, демоны, хуки
 hk.pkl             git-хуки (проверки перед коммитом)
 .github/           CI (hexlet-check, ci, opencode)
@@ -22,7 +25,8 @@ skills-lock.json   версии скилов coding-агентов (см. «Ск
 
 ```sh
 mise install          # поставит python/uv/node/hk/pitchfork и зависимости проекта
-mise run check        # линтер + проверка типов + дымовые тесты
+mise run check:fast   # линтер + проверка типов + тесты (то же гоняет git-хук pre-commit)
+mise run check        # полная проверка: check:fast + дрейф кодогенерации + браузерный E2E
 mise dev              # поднять бэкенд (:8000) и фронт (:5173) как фоновые демоны
 mise daemons status   # состояние сервисов
 ```
@@ -32,15 +36,21 @@ mise daemons status   # состояние сервисов
 | Команда | Что делает |
 |---|---|
 | `mise run install` | `uv sync` (бэкенд) + `npm ci` (фронт) |
+| `mise run gen` | сгенерировать OpenAPI и клиентский SDK из TypeSpec (`contract/`) |
+| `mise run contract` | `gen` + проверка, что сгенерированные артефакты не разошлись с закоммиченными |
 | `mise run lint` | `ruff` (бэкенд) и `oxlint` (фронт) |
 | `mise run typecheck` | `mypy` (Python) и `tsc` (TypeScript) |
 | `mise run test` | дымовые тесты: `pytest` (бэкенд) и `vitest` (фронт) |
-| `mise run check` | всё вместе — используется в CI и в git-хуке |
+| `mise run e2e` | браузерный E2E сценария гостя: Playwright сам поднимает бэкенд и фронт |
+| `mise run check:fast` | лёгкая проверка `lint → typecheck → test` — её гоняет git-хук pre-commit |
+| `mise run check` | полная проверка: `check:fast` + `contract` + `e2e` — то же гоняет CI |
 | `mise dev` | бэкенд и фронт как демоны |
 
 ## Разработка
 
-- Бэкенд: http://127.0.0.1:8000 (Swagger на `/docs`), роут `GET /api/healthcheck`.
+- Бэкенд: http://127.0.0.1:8000 (Swagger на `/docs`), роуты `GET /api/healthcheck` и
+  `GET`/`POST /api/event-types`. Контракт — TypeSpec в `contract/`, клиентский SDK
+  генерируется командой `mise run gen` (см. `contract/README.md`).
 - Фронтенд: http://127.0.0.1:5173; запросы к `/api/*` проксируются на бэкенд
   (`frontend/vite.config.ts`), поэтому CORS не нужен.
 
@@ -49,6 +59,17 @@ mise daemons status   # состояние сервисов
 ```sh
 cd backend  && uv run fastapi dev app/main.py
 cd frontend && npm run dev
+```
+
+## E2E (Playwright)
+
+`mise run e2e` прогоняет браузерный сценарий гостя (выбор типа → календарь → запись →
+подтверждение) на **настоящих** серверах: Playwright сам поднимает FastAPI (`127.0.0.1:8000`,
+временная БД `backend/e2e.db`) и Vite (`127.0.0.1:5173`). API бронирования не подменяется.
+Перед первым запуском поставь браузер Chromium:
+
+```sh
+npx --prefix frontend playwright install chromium   # в CI: npx playwright install --with-deps chromium
 ```
 
 ## Скилы агента
@@ -75,5 +96,17 @@ OpenCode видит скилы из `.agents/skills/` автоматически
 
 ## CI
 
-`.github/workflows/ci.yml` на каждый push запускает `mise run check` — те же проверки, что и локально.
+`.github/workflows/ci.yml` на каждый push запускает `mise run check` — полный набор проверок,
+что и локально: `check:fast` (lint, typecheck, test), `contract` (дрейф кодогенерации) и `e2e`
+(браузерный сценарий). Перед проверками CI ставит браузер:
+`npx playwright install --with-deps chromium`.
 `.github/workflows/hexlet-check.yml` — проверки курса Hexlet (не редактируется).
+
+## Релизы
+
+Релизы ведёт [release-please](https://github.com/googleapis/release-please) по
+Conventional Commits. При push в `main` воркфлоу `.github/workflows/release-please.yml`
+открывает или обновляет release-PR: он подставляет следующую версию в `version.txt` и
+добавляет запись в `CHANGELOG.md`. Слияние этого PR создаёт git-тег и GitHub Release.
+Настройки — манифестные, в корне: `release-please-config.json` (тип `simple`, секции
+changelog) и `.release-please-manifest.json` (текущая версия пакета `.`).

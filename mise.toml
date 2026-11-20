@@ -19,6 +19,18 @@ run = [
   "npm --prefix frontend ci",
 ]
 
+[tasks.gen]
+description = "Сгенерировать OpenAPI и клиентский SDK из TypeSpec-контракта"
+run = [
+  "npm --prefix contract ci",
+  "npm --prefix contract run gen",
+]
+
+[tasks.contract]
+description = "Сгенерировать артефакты из контракта и проверить, что они не разошлись с закоммиченными"
+depends = ["gen"]
+run = "node scripts/check-contract-drift.mjs"
+
 [tasks."lint:backend"]
 dir = "backend"
 run = "uv run ruff check ."
@@ -55,9 +67,26 @@ run = "npm run test"
 description = "Дымовые тесты бэкенда и фронтенда"
 depends = ["test:backend", "test:frontend"]
 
-[tasks.check]
-description = "Линтер, проверка типов и дымовые тесты"
+[tasks.e2e]
+description = "Браузерный E2E-сценарий гостя на настоящих серверах (Playwright)"
+dir = "frontend"
+run = "npm run e2e"
+
+[tasks."check:fast"]
+description = "Быстрая проверка: линтер, типы и тесты (без contract и e2e)"
 depends = ["lint", "typecheck", "test"]
+
+# Полная проверка — то, что запускают CI и разработчик перед выкладкой:
+# сначала быстрые проверки (check:fast), затем дрейф кодогенерации и браузерный E2E.
+# `contract` нельзя ставить в pre-commit: он считает дрейф через `git status`
+# и ложно падает при застейдженных изменениях (см. hk.pkl / AGENTS.md).
+[tasks.check]
+description = "Полная проверка: check:fast, дрейф кодогенерации и браузерный E2E"
+depends = ["check:fast"]
+run = [
+  "mise run contract",
+  "mise run e2e",
+]
 
 [tasks."dev:backend"]
 dir = "backend"

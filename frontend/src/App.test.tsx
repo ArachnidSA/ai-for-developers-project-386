@@ -1,8 +1,24 @@
 import { render, screen } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 
 import { AppRoutes } from './App'
+
+// Экраны /owner и /book получают данные через SDK — в тестах маршрутизации
+// подменяем сетевой слой, чтобы не ходить в API.
+vi.mock('@/api/eventTypes', () => ({
+  listEventTypes: vi.fn().mockResolvedValue([]),
+  createEventType: vi.fn(),
+  updateEventType: vi.fn(),
+  deleteEventType: vi.fn(),
+  archiveEventType: vi.fn(),
+  EventTypeInUseError: class EventTypeInUseError extends Error {},
+}))
+
+vi.mock('@/api/bookings', () => ({
+  listUpcomingBookings: vi.fn().mockResolvedValue([]),
+  deleteBooking: vi.fn(),
+}))
 
 function renderAt(path: string) {
   return render(

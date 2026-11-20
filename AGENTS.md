@@ -44,10 +44,17 @@
 ## Команды
 
 - Установка: `mise install` (postinstall-хук сам запускает задачу `install`).
-- Полная проверка: `mise run check` = **lint -> typecheck -> test**, запускай её для всей
-  изменённой работы. Именно её выполняют CI (`ci.yml`) и git-хук pre-commit (`hk.pkl`).
-- Отдельные задачи: `mise run lint`, `mise run typecheck`, `mise run test`
-  (у каждой есть подзадача `:backend` / `:frontend`).
+- Быстрая проверка: `mise run check:fast` = **lint -> typecheck -> test**. Её выполняет
+  git-хук pre-commit (`hk.pkl`): она не требует сети и генерации.
+- Полная проверка: `mise run check` = **check:fast -> contract -> e2e**: то же плюс проверка
+  дрейфа кодогенерации контракта и браузерный E2E на настоящих серверах. Её запускает CI
+  (`ci.yml`); гоняй её для всей изменённой работы перед выкладкой (нужны свободные порты
+  8000/5173 — E2E поднимает серверы сам).
+- Отдельные задачи: `mise run lint`, `mise run typecheck`, `mise run test`, `mise run contract`,
+  `mise run e2e` (у первых трёх есть подзадача `:backend` / `:frontend`).
+- `mise run contract` **нельзя** класть в pre-commit: он считает дрейф через `git status`
+  и ложно падает при застейдженных изменениях (например, во время коммита). Поэтому pre-commit
+  гоняет лёгкую `mise run check:fast` без `contract` и `e2e`.
 - Дев-серверы как демоны: `mise dev`, затем `mise daemons status` (бэкенд :8000, фронт :5173).
 
 Одиночный тест (запускается из каталога приложения, а не через mise):
@@ -55,6 +62,27 @@
 cd backend  && uv run pytest tests/test_health.py::test_healthcheck
 cd frontend && npm run test -- src/App.test.tsx
 ```
+
+## Кодогенерация контракта
+
+Источник истины для HTTP-контракта — **TypeSpec**: `contract/main.tsp` (плюс конфиг
+`contract/tspconfig.yaml`). Всё остальное генерируется одной командой:
+
+```sh
+mise run gen
+```
+
+- **Генерируемые пути** (их не правят руками): `contract/openapi.json` и
+  `frontend/src/api/generated/`.
+- `contract/openapi.json` и `frontend/src/api/generated/**` **коммитятся**, потому что
+  `mise run check` не должен требовать сети и генерации. Любая ручная правка этих файлов
+  затирается при следующем `mise run gen` — меняй `contract/main.tsp`, перегенерируй и
+  закоммить сгенерированное вместе с правкой контракта.
+- `mise run contract` = `mise run gen` + проверка, что сгенерированные файлы не разошлись
+  с закоммиченными; при дрейфе задача падает. Эту проверку выполняют CI и полная
+  `mise run check`; git-хук pre-commit гоняет лёгкую `mise run check:fast` без неё
+  (см. «Команды»).
+- Подробности о генераторах и зафиксированных версиях — в `contract/README.md`.
 
 ## Особенности инструментов
 
