@@ -124,6 +124,24 @@ export type EventTypeCreate = {
 export type EventTypeStatus = 'active' | 'archived';
 
 /**
+ * Данные для изменения типа события: переданные поля обновляются, остальные не трогаются.
+ */
+export type EventTypeUpdate = {
+    /**
+     * Название типа события.
+     */
+    name?: string;
+    /**
+     * Описание типа события.
+     */
+    description?: string;
+    /**
+     * Длительность встречи в минутах (5–720). Не двигает уже сделанные записи.
+     */
+    duration_minutes?: number;
+};
+
+/**
  * Свободный слот: полуинтервал `[start, end)` времени в UTC.
  */
 export type Slot = {
@@ -165,7 +183,12 @@ export type CalendarApiCreateBookingResponse = CalendarApiCreateBookingResponses
 export type CalendarApiListEventTypesData = {
     body?: never;
     path?: never;
-    query?: never;
+    query?: {
+        /**
+         * Включать архивные типы (для владельца).
+         */
+        include_archived?: boolean;
+    };
     url: '/api/event-types';
 };
 
@@ -193,6 +216,100 @@ export type CalendarApiCreateEventTypeResponses = {
 };
 
 export type CalendarApiCreateEventTypeResponse = CalendarApiCreateEventTypeResponses[keyof CalendarApiCreateEventTypeResponses];
+
+export type CalendarApiDeleteEventTypeData = {
+    body?: never;
+    path: {
+        /**
+         * Идентификатор типа события.
+         */
+        event_type_id: number;
+    };
+    query?: never;
+    url: '/api/event-types/{event_type_id}';
+};
+
+export type CalendarApiDeleteEventTypeErrors = {
+    /**
+     * The server cannot find the requested resource.
+     */
+    404: ApiError;
+    /**
+     * The request conflicts with the current state of the server.
+     */
+    409: ApiError;
+};
+
+export type CalendarApiDeleteEventTypeError = CalendarApiDeleteEventTypeErrors[keyof CalendarApiDeleteEventTypeErrors];
+
+export type CalendarApiDeleteEventTypeResponses = {
+    /**
+     * There is no content to send for this request, but the headers may be useful.
+     */
+    204: void;
+};
+
+export type CalendarApiDeleteEventTypeResponse = CalendarApiDeleteEventTypeResponses[keyof CalendarApiDeleteEventTypeResponses];
+
+export type CalendarApiUpdateEventTypeData = {
+    body: EventTypeUpdate;
+    path: {
+        /**
+         * Идентификатор типа события.
+         */
+        event_type_id: number;
+    };
+    query?: never;
+    url: '/api/event-types/{event_type_id}';
+};
+
+export type CalendarApiUpdateEventTypeErrors = {
+    /**
+     * The server cannot find the requested resource.
+     */
+    404: ApiError;
+};
+
+export type CalendarApiUpdateEventTypeError = CalendarApiUpdateEventTypeErrors[keyof CalendarApiUpdateEventTypeErrors];
+
+export type CalendarApiUpdateEventTypeResponses = {
+    /**
+     * The request has succeeded.
+     */
+    200: EventType;
+};
+
+export type CalendarApiUpdateEventTypeResponse = CalendarApiUpdateEventTypeResponses[keyof CalendarApiUpdateEventTypeResponses];
+
+export type CalendarApiArchiveEventTypeData = {
+    body?: never;
+    path: {
+        /**
+         * Идентификатор типа события.
+         */
+        event_type_id: number;
+    };
+    query?: never;
+    url: '/api/event-types/{event_type_id}/archive';
+};
+
+export type CalendarApiArchiveEventTypeErrors = {
+    /**
+     * The server cannot find the requested resource.
+     */
+    404: ApiError;
+};
+
+export type CalendarApiArchiveEventTypeError = CalendarApiArchiveEventTypeErrors[keyof CalendarApiArchiveEventTypeErrors];
+
+export type CalendarApiArchiveEventTypeResponses = {
+    /**
+     * The request has succeeded.
+     */
+    200: EventType;
+};
+
+export type CalendarApiArchiveEventTypeResponse = CalendarApiArchiveEventTypeResponses[keyof CalendarApiArchiveEventTypeResponses];
 
 export type CalendarApiListEventTypeSlotsData = {
     body?: never;
