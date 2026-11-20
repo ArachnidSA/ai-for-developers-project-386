@@ -16,10 +16,13 @@ jobs:
       - name: Set up mise
         uses: jdx/mise-action@v5
 
+      # Браузер для Playwright: e2e (внутри `mise run check`) запускает настоящий
+      # Chromium, а в образе GitHub-hosted его нет.
+      - name: Install Playwright browsers
+        working-directory: frontend
+        run: npx playwright install --with-deps chromium
+
+      # `mise run check` = check:fast (lint, typecheck, test) + contract (дрейф
+      # кодогенерации) + e2e (браузерный сценарий на настоящих серверах).
       - name: Run checks
         run: mise run check
-
-      # Перегенерировать артефакты из контракта и убедиться, что дерево не изменилось:
-      # падает, если сгенерированные файлы разошлись с закоммиченными.
-      - name: Check contract codegen drift
-        run: mise run contract

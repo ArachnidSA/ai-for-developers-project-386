@@ -72,9 +72,21 @@ description = "Браузерный E2E-сценарий гостя на нас�
 dir = "frontend"
 run = "npm run e2e"
 
-[tasks.check]
-description = "Линтер, проверка типов и дымовые тесты"
+[tasks."check:fast"]
+description = "Быстрая проверка: линтер, типы и тесты (без contract и e2e)"
 depends = ["lint", "typecheck", "test"]
+
+# Полная проверка — то, что запускают CI и разработчик перед выкладкой:
+# сначала быстрые проверки (check:fast), затем дрейф кодогенерации и браузерный E2E.
+# `contract` нельзя ставить в pre-commit: он считает дрейф через `git status`
+# и ложно падает при застейдженных изменениях (см. hk.pkl / AGENTS.md).
+[tasks.check]
+description = "Полная проверка: check:fast, дрейф кодогенерации и браузерный E2E"
+depends = ["check:fast"]
+run = [
+  "mise run contract",
+  "mise run e2e",
+]
 
 [tasks."dev:backend"]
 dir = "backend"

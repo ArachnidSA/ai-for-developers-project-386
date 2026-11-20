@@ -23,7 +23,8 @@ skills-lock.json   версии скилов coding-агентов (см. «Ск
 
 ```sh
 mise install          # поставит python/uv/node/hk/pitchfork и зависимости проекта
-mise run check        # линтер + проверка типов + дымовые тесты
+mise run check:fast   # линтер + проверка типов + тесты (то же гоняет git-хук pre-commit)
+mise run check        # полная проверка: check:fast + дрейф кодогенерации + браузерный E2E
 mise dev              # поднять бэкенд (:8000) и фронт (:5173) как фоновые демоны
 mise daemons status   # состояние сервисов
 ```
@@ -39,7 +40,8 @@ mise daemons status   # состояние сервисов
 | `mise run typecheck` | `mypy` (Python) и `tsc` (TypeScript) |
 | `mise run test` | дымовые тесты: `pytest` (бэкенд) и `vitest` (фронт) |
 | `mise run e2e` | браузерный E2E сценария гостя: Playwright сам поднимает бэкенд и фронт |
-| `mise run check` | всё вместе — используется в CI и в git-хуке |
+| `mise run check:fast` | лёгкая проверка `lint → typecheck → test` — её гоняет git-хук pre-commit |
+| `mise run check` | полная проверка: `check:fast` + `contract` + `e2e` — то же гоняет CI |
 | `mise dev` | бэкенд и фронт как демоны |
 
 ## Разработка
@@ -92,5 +94,8 @@ OpenCode видит скилы из `.agents/skills/` автоматически
 
 ## CI
 
-`.github/workflows/ci.yml` на каждый push запускает `mise run check` — те же проверки, что и локально.
+`.github/workflows/ci.yml` на каждый push запускает `mise run check` — полный набор проверок,
+что и локально: `check:fast` (lint, typecheck, test), `contract` (дрейф кодогенерации) и `e2e`
+(браузерный сценарий). Перед проверками CI ставит браузер:
+`npx playwright install --with-deps chromium`.
 `.github/workflows/hexlet-check.yml` — проверки курса Hexlet (не редактируется).
