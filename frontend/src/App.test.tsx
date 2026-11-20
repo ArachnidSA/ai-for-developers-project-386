@@ -25,8 +25,8 @@ describe('маршрутизация', () => {
     expect(screen.getByRole('heading', { name: 'Запись на звонок' })).toBeTruthy()
   })
 
-  it('на /admin показывает админку', () => {
-    renderAt('/admin')
+  it('на /owner показывает экран владельца', () => {
+    renderAt('/owner')
 
     expect(screen.getByRole('heading', { name: 'Админка' })).toBeTruthy()
   })

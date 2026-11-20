@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom'
 
-function AdminPage() {
+function OwnerPage() {
   return (
     <main className="mx-auto flex max-w-2xl flex-col gap-4 p-8">
       <h1 className="text-3xl font-bold tracking-tight">Админка</h1>
@@ -12,4 +12,4 @@ function AdminPage() {
   )
 }
 
-export { AdminPage }
+export { OwnerPage }
