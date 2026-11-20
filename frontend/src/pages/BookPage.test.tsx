@@ -2,6 +2,7 @@ import { fireEvent, render, screen, waitFor, within } from '@testing-library/rea
 import { MemoryRouter } from 'react-router-dom'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
+import { BookingConflictError, createBooking, type Booking } from '@/api/bookings'
 import { listEventTypes, type EventType } from '@/api/eventTypes'
 import { listEventTypeSlots, type Slot } from '@/api/slots'
 
@@ -16,8 +17,14 @@ vi.mock('@/api/slots', () => ({
   listEventTypeSlots: vi.fn(),
 }))
 
+vi.mock('@/api/bookings', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@/api/bookings')>()
+  return { ...actual, createBooking: vi.fn() }
+})
+
 const listEventTypesMock = vi.mocked(listEventTypes)
 const listEventTypeSlotsMock = vi.mocked(listEventTypeSlots)
+const createBookingMock = vi.mocked(createBooking)
 
 const MEETING: EventType = {
   id: 1,
@@ -30,6 +37,21 @@ const MEETING: EventType = {
 const MORNING_SLOT: Slot = {
   start: '2026-11-20T04:00:00Z',
   end: '2026-11-20T05:00:00Z',
+}
+
+const SECOND_SLOT: Slot = {
+  start: '2026-11-20T05:00:00Z',
+  end: '2026-11-20T06:00:00Z',
+}
+
+const CREATED_BOOKING: Booking = {
+  id: 1,
+  event_type_id: MEETING.id,
+  guest_name: 'Анна',
+  guest_email: 'anna@example.com',
+  note: 'Обсудить проект',
+  start: MORNING_SLOT.start,
+  end: MORNING_SLOT.end,
 }
 
 function localIso(offsetDays = 0): string {
@@ -118,5 +140,79 @@ describe('экран записи гостя', () => {
 
     const group = screen.getByRole('group', { name: 'Выберите день' })
     expect(within(group).getAllByRole('button')).toHaveLength(14)
+  })
+
+  it('показывает форму и подтверждение после успешной записи', async () => {
+    listEventTypesMock.mockResolvedValue([MEETING])
+    listEventTypeSlotsMock.mockResolvedValue([MORNING_SLOT])
+    createBookingMock.mockResolvedValue(CREATED_BOOKING)
+
+    renderBookPage()
+    await screen.findByText('Встреча 60 минут')
+    fireEvent.click(screen.getByRole('button', { name: /Встреча 60 минут/ }))
+    selectDay(0)
+    fireEvent.click(await screen.findByTestId('slot'))
+
+    fireEvent.change(screen.getByLabelText('Имя'), { target: { value: 'Анна' } })
+    fireEvent.change(screen.getByLabelText('Email'), { target: { value: 'anna@example.com' } })
+    fireEvent.change(screen.getByLabelText('Заметка'), { target: { value: 'Обсудить проект' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Записаться' }))
+
+    await waitFor(() =>
+      expect(createBookingMock).toHaveBeenCalledWith({
+        event_type_id: MEETING.id,
+        start: MORNING_SLOT.start,
+        guest_name: 'Анна',
+        guest_email: 'anna@example.com',
+        note: 'Обсудить проект',
+      }),
+    )
+    expect(await screen.findByText('Запись оформлена')).toBeTruthy()
+  })
+
+  it('отправляет только имя, когда email и заметка пустые', async () => {
+    listEventTypesMock.mockResolvedValue([MEETING])
+    listEventTypeSlotsMock.mockResolvedValue([MORNING_SLOT])
+    createBookingMock.mockResolvedValue(CREATED_BOOKING)
+
+    renderBookPage()
+    await screen.findByText('Встреча 60 минут')
+    fireEvent.click(screen.getByRole('button', { name: /Встреча 60 минут/ }))
+    selectDay(0)
+    fireEvent.click(await screen.findByTestId('slot'))
+
+    fireEvent.change(screen.getByLabelText('Имя'), { target: { value: 'Борис' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Записаться' }))
+
+    await waitFor(() =>
+      expect(createBookingMock).toHaveBeenCalledWith({
+        event_type_id: MEETING.id,
+        start: MORNING_SLOT.start,
+        guest_name: 'Борис',
+        guest_email: undefined,
+        note: undefined,
+      }),
+    )
+  })
+
+  it('при конфликте показывает сообщение и даёт выбрать другой слот', async () => {
+    listEventTypesMock.mockResolvedValue([MEETING])
+    listEventTypeSlotsMock.mockResolvedValue([MORNING_SLOT, SECOND_SLOT])
+    createBookingMock.mockRejectedValue(
+      new BookingConflictError('Это время уже занято, выберите другой слот'),
+    )
+
+    renderBookPage()
+    await screen.findByText('Встреча 60 минут')
+    fireEvent.click(screen.getByRole('button', { name: /Встреча 60 минут/ }))
+    selectDay(0)
+    fireEvent.click((await screen.findAllByTestId('slot'))[0])
+
+    fireEvent.change(screen.getByLabelText('Имя'), { target: { value: 'Анна' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Записаться' }))
+
+    expect(await screen.findByText('Это время уже занято, выберите другой слот')).toBeTruthy()
+    // Слоты снова доступны для выбора — можно записаться на другое время.
+    expect(screen.getAllByTestId('slot').length).toBeGreaterThan(0)
   })
 })
