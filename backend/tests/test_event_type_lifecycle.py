@@ -1,70 +1,15 @@
-from datetime import UTC, date, datetime, time, timedelta
-from typing import TypedDict
-from zoneinfo import ZoneInfo
+from datetime import datetime, timedelta
 
-from app.models.booking import Booking
 from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session, sessionmaker
 
-# Границы из спеки: рабочие часы 09:00–21:00 в поясе владельца.
-OWNER_TZ = ZoneInfo("Asia/Yekaterinburg")
-
-
-class EventTypePayload(TypedDict):
-    """Представление типа события в ответе API."""
-
-    id: int
-    name: str
-    description: str
-    duration_minutes: int
-    status: str
-
-
-def owner_today() -> date:
-    """Сегодняшний день в поясе владельца."""
-    return datetime.now(OWNER_TZ).date()
-
-
-def owner_time(day: date, hour: int, minute: int) -> datetime:
-    """Время в поясе владельца, переведённое в UTC."""
-    return datetime.combine(day, time(hour, minute), tzinfo=OWNER_TZ).astimezone(UTC)
-
-
-def create_event_type(
-    client: TestClient,
-    *,
-    name: str = "Звонок",
-    description: str = "",
-    duration_minutes: int = 30,
-) -> EventTypePayload:
-    """Заводит тип события через API и возвращает его представление."""
-    response = client.post(
-        "/api/event-types",
-        json={"name": name, "description": description, "duration_minutes": duration_minutes},
-    )
-    assert response.status_code == 201
-    return response.json()
-
-
-def add_booking(
-    session_factory: sessionmaker[Session],
-    event_type_id: int,
-    start: datetime,
-    end: datetime,
-) -> None:
-    """Кладёт запись в БД напрямую (в UTC), минуя HTTP."""
-    with session_factory() as session:
-        session.add(
-            Booking(
-                event_type_id=event_type_id,
-                guest_name="Гость",
-                guest_email=None,
-                note=None,
-                start=start.astimezone(UTC).replace(tzinfo=None),
-                end=end.astimezone(UTC).replace(tzinfo=None),
-            )
-        )
-        session.commit()
+from conftest import (
+    EventTypePayload,
+    add_booking,
+    create_event_type,
+    owner_time,
+    owner_today,
+)
 
 
 def owner_event_types(client: TestClient) -> list[EventTypePayload]:

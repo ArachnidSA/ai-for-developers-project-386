@@ -1,5 +1,8 @@
 import os
 from collections.abc import Iterator
+from datetime import UTC, date, datetime, time
+from typing import TypedDict
+from zoneinfo import ZoneInfo
 
 import pytest
 from fastapi.testclient import TestClient
@@ -11,6 +14,73 @@ from sqlalchemy.pool import StaticPool
 # in-memory SQLite, поэтому переменная окружения лишь отводит реальный движок
 # от рабочего `calendar.db`.
 os.environ.setdefault("DATABASE_URL", "sqlite://")
+
+# Границы из спеки: рабочие часы 09:00–21:00 в поясе владельца.
+OWNER_TZ = ZoneInfo("Asia/Yekaterinburg")
+
+
+class EventTypePayload(TypedDict):
+    """Представление типа события в ответе API."""
+
+    id: int
+    name: str
+    description: str
+    duration_minutes: int
+    status: str
+
+
+def owner_today() -> date:
+    """Сегодняшний день в поясе владельца."""
+    return datetime.now(OWNER_TZ).date()
+
+
+def owner_time(day: date, hour: int, minute: int) -> datetime:
+    """Время в поясе владельца, переведённое в UTC."""
+    return datetime.combine(day, time(hour, minute), tzinfo=OWNER_TZ).astimezone(UTC)
+
+
+def create_event_type(
+    client: TestClient,
+    *,
+    name: str = "Звонок",
+    description: str = "",
+    duration_minutes: int = 30,
+) -> EventTypePayload:
+    """Заводит тип события через API и возвращает его представление."""
+    response = client.post(
+        "/api/event-types",
+        json={"name": name, "description": description, "duration_minutes": duration_minutes},
+    )
+    assert response.status_code == 201
+    return response.json()
+
+
+def add_booking(
+    session_factory: sessionmaker[Session],
+    event_type_id: int,
+    start: datetime,
+    end: datetime,
+    *,
+    guest_name: str = "Гость",
+    guest_email: str | None = None,
+    note: str | None = None,
+) -> None:
+    """Кладёт запись в БД напрямую (naive-UTC), минуя HTTP."""
+    from app.models.booking import Booking
+    from app.services.time import naive_utc
+
+    with session_factory() as session:
+        session.add(
+            Booking(
+                event_type_id=event_type_id,
+                guest_name=guest_name,
+                guest_email=guest_email,
+                note=note,
+                start=naive_utc(start),
+                end=naive_utc(end),
+            )
+        )
+        session.commit()
 
 
 @pytest.fixture
