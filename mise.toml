@@ -72,6 +72,14 @@ description = "Браузерный E2E-сценарий гостя на нас�
 dir = "frontend"
 run = "npm run e2e"
 
+[tasks."docker:build"]
+description = "Собрать образ приложения из корневого Dockerfile"
+run = "docker build -t calendar-app:local -f Dockerfile ."
+
+[tasks."docker:smoke"]
+description = "Собрать образ, поднять контейнер и прогнать сценарий гостя и владельца"
+run = "node scripts/docker-smoke.mjs"
+
 [tasks."check:fast"]
 description = "Быстрая проверка: линтер, типы и тесты (без contract и e2e)"
 depends = ["lint", "typecheck", "test"]

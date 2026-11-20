@@ -2,6 +2,8 @@
 .env
 .env.*
 !.env.example
+# Локальный MCP-ключ Render (секрет, не коммитить)
+/render-api-key
 
 # Python
 __pycache__/
