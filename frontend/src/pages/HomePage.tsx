@@ -1,27 +1,26 @@
-import { ArrowRight } from 'lucide-react'
-import { Link } from 'react-router-dom'
-
-import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { BookingHero } from '@/components/BookingHero'
+import { FeaturesCard } from '@/components/FeaturesCard'
+import { Navbar } from '@/components/Navbar'
 
 function HomePage() {
   return (
-    <main className="mx-auto flex max-w-2xl flex-col gap-6 p-8">
-      <h1 className="text-3xl font-bold tracking-tight">Calendar</h1>
-      <Card>
-        <CardHeader>
-          <CardTitle>Запись на звонок</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <Button asChild>
-            <Link to="/book">
-              Записаться
-              <ArrowRight />
-            </Link>
-          </Button>
-        </CardContent>
-      </Card>
-    </main>
+    <div className="flex min-h-screen flex-col bg-white">
+      <Navbar />
+      <main className="relative flex flex-1 overflow-hidden">
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-0 bg-gradient-to-br from-sky-100 via-white to-white"
+        />
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-0 bg-[radial-gradient(60%_60%_at_100%_0%,rgba(251,146,60,0.18),transparent_70%)]"
+        />
+        <div className="relative mx-auto grid w-full max-w-6xl grid-cols-1 items-start gap-12 px-6 pt-16 md:px-10 md:pt-24 lg:grid-cols-12">
+          <BookingHero />
+          <FeaturesCard />
+        </div>
+      </main>
+    </div>
   )
 }
 

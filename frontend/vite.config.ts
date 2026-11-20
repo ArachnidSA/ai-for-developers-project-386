@@ -26,5 +26,7 @@ export default defineConfig({
   },
   test: {
     environment: 'jsdom',
+    // Без глобалов vitest RTL не включает авто-cleanup — чистим DOM между тестами вручную.
+    setupFiles: ['./src/test/setup.ts'],
   },
 })
