@@ -19,6 +19,13 @@ run = [
   "npm --prefix frontend ci",
 ]
 
+[tasks.gen]
+description = "Сгенерировать OpenAPI и клиентский SDK из TypeSpec-контракта"
+run = [
+  "npm --prefix contract ci",
+  "npm --prefix contract run gen",
+]
+
 [tasks."lint:backend"]
 dir = "backend"
 run = "uv run ruff check ."
