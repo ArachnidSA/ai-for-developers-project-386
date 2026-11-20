@@ -2,7 +2,7 @@
 
 import type { Client, ClientMeta, Options as Options2, RequestResult, TDataShape } from './client';
 import { client } from './client.gen';
-import type { CalendarApiCreateEventTypeData, CalendarApiCreateEventTypeResponses, CalendarApiListEventTypesData, CalendarApiListEventTypesResponses } from './types.gen';
+import type { CalendarApiCreateEventTypeData, CalendarApiCreateEventTypeResponses, CalendarApiListEventTypesData, CalendarApiListEventTypeSlotsData, CalendarApiListEventTypeSlotsResponses, CalendarApiListEventTypesResponses } from './types.gen';
 
 export type Options<TData extends TDataShape = TDataShape, ThrowOnError extends boolean = boolean, TResponse = unknown> = Options2<TData, ThrowOnError, TResponse> & {
     /**
@@ -34,3 +34,10 @@ export const calendarApiCreateEventType = <ThrowOnError extends boolean = false>
         ...options.headers
     }
 });
+
+/**
+ * Свободные слоты типа события на календарный день в поясе владельца.
+ * Слоты идут встык с шагом, равным длительности типа, и не выходят за рабочие часы 09:00–21:00.
+ * Неизвестный или архивный тип — 404; дата вне окна записи (14 дней от «сегодня») — 400.
+ */
+export const calendarApiListEventTypeSlots = <ThrowOnError extends boolean = false>(options: Options<CalendarApiListEventTypeSlotsData, ThrowOnError>): RequestResult<CalendarApiListEventTypeSlotsResponses, unknown, ThrowOnError> => (options.client ?? client).get<CalendarApiListEventTypeSlotsResponses, unknown, ThrowOnError>({ url: '/api/event-types/{event_type_id}/slots', ...options });

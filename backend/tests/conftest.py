@@ -14,12 +14,16 @@ os.environ.setdefault("DATABASE_URL", "sqlite://")
 
 
 @pytest.fixture
-def client() -> Iterator[TestClient]:
-    """HTTP-клиент с изолированной in-memory БД для каждого теста."""
-    from app.core.database import Base, get_session
+def session_factory() -> Iterator[sessionmaker[Session]]:
+    """Фабрика сессий к изолированной in-memory БД для каждого теста.
+
+    Тесты используют её, чтобы напрямую подготовить данные (например, записи),
+    а HTTP-клиент — чтобы выполнять запросы к той же базе.
+    """
+    from app.core.database import Base
 
     # Регистрируем модели в metadata до создания таблиц.
-    from app.models import event_type  # noqa: F401
+    from app.models import booking, event_type  # noqa: F401
 
     engine = create_engine(
         "sqlite://",
@@ -27,10 +31,16 @@ def client() -> Iterator[TestClient]:
         poolclass=StaticPool,
     )
     Base.metadata.create_all(engine)
-    testing_session = sessionmaker(bind=engine, autoflush=False, autocommit=False)
+    yield sessionmaker(bind=engine, autoflush=False, autocommit=False)
+
+
+@pytest.fixture
+def client(session_factory: sessionmaker[Session]) -> Iterator[TestClient]:
+    """HTTP-клиент с изолированной in-memory БД для каждого теста."""
+    from app.core.database import get_session
 
     def override_get_session() -> Iterator[Session]:
-        with testing_session() as session:
+        with session_factory() as session:
             yield session
 
     from app.main import app

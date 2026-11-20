@@ -55,6 +55,15 @@ mise run gen
 
 ## Использование SDK во фронтенде
 
-Обёртка доменного слоя — `frontend/src/api/eventTypes.ts`, конфигурация базового URL —
+Обёртки доменного слоя — `frontend/src/api/eventTypes.ts` (типы событий) и
+`frontend/src/api/slots.ts` (свободные слоты), конфигурация базового URL —
 `frontend/src/api/client.ts`. Компоненты ходят в API только через эти модули, а не
 через `fetch` напрямую.
+
+## Эндпоинты
+
+| Метод и путь | Назначение |
+| --- | --- |
+| `GET /api/event-types` | список действующих типов событий |
+| `POST /api/event-types` | создание типа события |
+| `GET /api/event-types/{eventTypeId}/slots?date=YYYY-MM-DD` | свободные слоты типа на день в поясе владельца (`start`/`end` в UTC) |
