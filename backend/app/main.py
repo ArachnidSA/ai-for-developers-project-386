@@ -7,7 +7,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.core.config import settings
 from app.core.database import init_db
-from app.routers import event_types, health, slots
+from app.routers import bookings, event_types, health, slots
 
 
 @asynccontextmanager
@@ -30,6 +30,7 @@ app.add_middleware(
 app.include_router(health.router, prefix="/api", tags=["health"])
 app.include_router(event_types.router, prefix="/api", tags=["event-types"])
 app.include_router(slots.router, prefix="/api", tags=["slots"])
+app.include_router(bookings.router, prefix="/api", tags=["bookings"])
 
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8000)
